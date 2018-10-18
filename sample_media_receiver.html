@@ -1,0 +1,20 @@
+<html>
+<head>
+  <script type="text/javascript"
+      src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js">
+  </script>
+</head>
+<body>
+  <cast-media-player></cast-media-player>
+  <style>
+    #player {
+        --theme-hue: 210;
+        --progress-color: rgb(0, 255, 0);
+        --splash-image: url("https://www.google.com.ar/url?sa=i&source=images&cd=&cad=rja&uact=8&ved=2ahUKEwjfkMOD-Y7eAhVLHZAKHfDOAZoQjRx6BAgBEAU&url=https%3A%2F%2Fwww.linkedin.com%2Fcompany%2Ffox-broadcasting&psig=AOvVaw2_ybGjseN2H2pE0TT5EDow&ust=1539916199981716");
+    }
+  </style>
+  <script>
+    cast.framework.CastReceiverContext.getInstance().start();
+  </script>
+</body>
+</html>
