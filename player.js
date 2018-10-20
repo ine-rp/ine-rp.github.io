@@ -598,7 +598,6 @@ sampleplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
     self.displayPreviewMode_ = false;
     self.log_('Error during preload');
   };
-    console.log('LICENSE');
     self.log_('LICENSE');
   //host.licenseUrl = event.data.media.customData.licenseUrl;
   self.preloadPlayer_ = new cast.player.api.Player(host);
@@ -837,6 +836,7 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
         'mediaElement': this.mediaElement_
       });
       host.onError = loadErrorCallback;
+      host.licenseUrl = event.data.customData.licenseUrl;
       this.player_ = new cast.player.api.Player(host);
       this.player_.load(protocolFunc(host));
     } else {
