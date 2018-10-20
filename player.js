@@ -598,6 +598,7 @@ sampleplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
     self.displayPreviewMode_ = false;
     self.log_('Error during preload');
   };
+    console.log('LICENSE');
     self.log_('LICENSE');
   //host.licenseUrl = event.data.media.customData.licenseUrl;
   self.preloadPlayer_ = new cast.player.api.Player(host);
