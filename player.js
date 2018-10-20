@@ -2054,9 +2054,9 @@ sampleplayer.getPath_ = function(url) {
  * @private
  */
 sampleplayer.CastPlayer.prototype.log_ = function(message) {
-  if (this.debug_ && message) {
+  //if (this.debug_ && message) {
     console.log(message);
-  }
+  //}
 };
 
 
