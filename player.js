@@ -600,7 +600,6 @@ sampleplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
   };
     self.log_('LICENSE');
   //host.licenseUrl = event.data.media.customData.licenseUrl;
-    host.licenseUrl = 'https://xrdapi3-035198056073.g.idviu.net/xio/6/licenser?drm=3&salt=1540240857&sid=2CC7FFCB-BB71-9795-55F3-036FC6FF77B1-7219F8CF;xrdapi3-035198056073.g.idviu.net&utid=fox/BIRDMANENGVAM031692031692FEATU-FBB4&account=fox&vid=031692FEATURETTEMICHAELKEATONB-8721&mvpsig=4f283793f0c86db405362fbee917e8b76ea0f0f7&download=0';
   self.preloadPlayer_ = new cast.player.api.Player(host);
   self.preloadPlayer_.preload(protocolFunc(host));
   return true;
@@ -837,7 +836,8 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
         'mediaElement': this.mediaElement_
       });
       host.onError = loadErrorCallback;
-      host.licenseUrl = event.data.customData.licenseUrl;
+      //host.licenseUrl = event.data.customData.licenseUrl;
+        host.licenseUrl = 'https://xrdapi3-035198056073.g.idviu.net/xio/6/licenser?drm=3&salt=1540241174&sid=2CC7FFCB-BB71-9795-55F3-036FC6FF77B1-7219F8CF;xrdapi3-035198056073.g.idviu.net&utid=fox/BIRDMANENGVAM031692031692FEATU-FBB4&account=fox&vid=031692FEATURETTEMICHAELKEATONB-8721&mvpsig=ac66b8d33e1402198b6c0334135f91056a1154ba&download=0';
       this.player_ = new cast.player.api.Player(host);
       this.player_.load(protocolFunc(host));
     } else {
