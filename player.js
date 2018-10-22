@@ -836,7 +836,7 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
         'mediaElement': this.mediaElement_
       });
       host.onError = loadErrorCallback;
-      host.licenseUrl = 'https://xrdapi3-035198056073.g.idviu.net/xio/6/licenser?drm=3&salt=1540241388&sid=2CC7FFCB-BB71-9795-55F3-036FC6FF77B1-7219F8CF;xrdapi3-035198056073.g.idviu.net&utid=fox/BIRDMANENGVAM031692031692FEATU-FBB4&account=fox&vid=031692FEATURETTEMICHAELKEATONB-8721&mvpsig=bd093a441b4e729d81e60e24be762709cdf49388&download=0';
+      host.licenseUrl = 'https://xrdapi3-035198056073.g.idviu.net/xio/6/licenser?drm=3&salt=1540252009&sid=E0B5D3AF-2CEA-C5D8-2E2D-164E266D8BF1-B5BA0F97;xrdapi3-035198056073.g.idviu.net&utid=fox/BIRDMANENGVAM031692031692FEATU-FBB4&account=fox&vid=031692FEATURETTEMICHAELKEATONB-8721&mvpsig=3666eb21ba13c912d24a9520a47413eb7bc8c05c&download=0';
       this.player_ = new cast.player.api.Player(host);
       this.player_.load(protocolFunc(host));
     } else {
