@@ -797,10 +797,13 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
   this.log_('loadVideo_');
   var self = this;
   var protocolFunc = null;
+    this.log_('TRYING TO GET LICENSE');
+    this.log_(info.data.media.customData.licenseUrl);
+    this.log_(info.data.customData.licenseUrl);
+    this.log_(info.message.media.customData.licenseUrl);
   var url = info.message.media.contentId;
   var protocolFunc = sampleplayer.getProtocolFunction_(info.message.media);
   var wasPreloaded = false;
-
   this.letPlayerHandleAutoPlay_(info);
   if (!protocolFunc) {
     this.log_('loadVideo_: using MediaElement');
@@ -836,7 +839,7 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
         'mediaElement': this.mediaElement_
       });
       host.onError = loadErrorCallback;
-      host.licenseUrl = 'https://xrdapi3-035198056073.g.idviu.net/xio/6/licenser?drm=3&salt=1540252009&sid=E0B5D3AF-2CEA-C5D8-2E2D-164E266D8BF1-B5BA0F97;xrdapi3-035198056073.g.idviu.net&utid=fox/BIRDMANENGVAM031692031692FEATU-FBB4&account=fox&vid=031692FEATURETTEMICHAELKEATONB-8721&mvpsig=3666eb21ba13c912d24a9520a47413eb7bc8c05c&download=0';
+      //host.licenseUrl = event.data.customData.licenseUrl;
       this.player_ = new cast.player.api.Player(host);
       this.player_.load(protocolFunc(host));
     } else {
