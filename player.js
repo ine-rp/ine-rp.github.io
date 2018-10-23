@@ -797,10 +797,6 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
   this.log_('loadVideo_');
   var self = this;
   var protocolFunc = null;
-    this.log_('TRYING TO GET LICENSE');
-    //this.log_(info.data.media.customData.licenseUrl);
-    //this.log_(info.data.customData.licenseUrl);
-    this.log_(info.message.media.customData.licenseUrl);
   var url = info.message.media.contentId;
   var protocolFunc = sampleplayer.getProtocolFunction_(info.message.media);
   var wasPreloaded = false;
@@ -839,7 +835,7 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
         'mediaElement': this.mediaElement_
       });
       host.onError = loadErrorCallback;
-      //host.licenseUrl = event.data.customData.licenseUrl;
+      host.licenseUrl = info.message.media.customData.licenseUrl;
       this.player_ = new cast.player.api.Player(host);
       this.player_.load(protocolFunc(host));
     } else {
