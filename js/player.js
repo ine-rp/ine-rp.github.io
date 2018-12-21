@@ -46,12 +46,12 @@
 
 'use strict';
 
+var ReloadRequested = false;
 
 /**
  * Creates the namespace
  */
 var sampleplayer = sampleplayer || {};
-
 
 
 /**
@@ -74,15 +74,22 @@ var sampleplayer = sampleplayer || {};
  * @export
  */
 sampleplayer.CastPlayer = function(element) {
+	
+	this.version_ = "1.0.45";
+	console.log("### PLAYER PROD VERSION :"+this.version_+" ###");
 
   /**
    * The debug setting to control receiver, MPL and player logging.
    * @private {boolean}
    */
-  this.debug_ = sampleplayer.DISABLE_DEBUG_;
+	this.debug_ = sampleplayer.DISABLE_DEBUG_; // only for debug at Google level
+  
   if (this.debug_) {
-    cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
+	cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
     cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
+  } else {
+	cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.NONE);
+	cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.NONE);
   }
 
   /**
@@ -90,6 +97,21 @@ sampleplayer.CastPlayer = function(element) {
    * @private {!Element}
    */
   this.element_ = element;
+  
+  this.STAT_VideoStreamInfos = null;
+  this.STAT_VideoStreamInfosOldBandwidth = 0;
+  this.STAT_VideoMaxProfileTimer = null;
+  this.STAT_VideoGlobalProfileTimer = null;
+  
+  this.OCS_STAT_URL = "https://api.ocs.fr/apps/v1/report/player";
+  this.OCS_STAT = { uuid:"", isdownload:"false", manifesturl:"", programid:"", errorstatus:{}, bitratestatus: {}, lastevent: {}, lastaction: {}, timeframe: {}, buffering : {} };
+  
+  this.STAT_launchStartTime = this.getTimeSec();
+  this.STAT_playStartPosition = 0;
+  this.STAT_playEndPosition = 0;
+  this.STAT_profileuseStack = {};
+  this.GRECO_STAT_URL = "https://ocs.labgency.ws/stat/clear?e=stat&m=set&s=ofr.ocs";
+  this.GRECO_STAT = {};
 
   /**
    * The current type of the player.
@@ -187,6 +209,14 @@ sampleplayer.CastPlayer = function(element) {
    */
   this.player_ = null;
 
+  this.preferedLanguage = "VF";
+  
+  /**
+   * Protocol Func
+   * @private {cast.player.api.Player}
+   */
+  this.protocol_ = null; 
+  
   /**
    * Media player used to preload content.
    * @private {cast.player.api.Player}
@@ -234,20 +264,15 @@ sampleplayer.CastPlayer = function(element) {
    * The media element.
    * @private {HTMLMediaElement}
    */
-  this.mediaElement_ = /** @type {HTMLMediaElement} */
-      (this.element_.querySelector('video'));
+  this.mediaElement_ = /** @type {HTMLMediaElement} */ (this.element_.querySelector('video'));
   this.mediaElement_.addEventListener('error', this.onError_.bind(this), false);
-  this.mediaElement_.addEventListener('playing', this.onPlaying_.bind(this),
-      false);
+  this.mediaElement_.addEventListener('playing', this.onPlaying_.bind(this), false);
   this.mediaElement_.addEventListener('pause', this.onPause_.bind(this), false);
   this.mediaElement_.addEventListener('ended', this.onEnded_.bind(this), false);
   this.mediaElement_.addEventListener('abort', this.onAbort_.bind(this), false);
-  this.mediaElement_.addEventListener('timeupdate', this.onProgress_.bind(this),
-      false);
-  this.mediaElement_.addEventListener('seeking', this.onSeekStart_.bind(this),
-      false);
-  this.mediaElement_.addEventListener('seeked', this.onSeekEnd_.bind(this),
-      false);
+  this.mediaElement_.addEventListener('timeupdate', this.onProgress_.bind(this), false);
+  this.mediaElement_.addEventListener('seeking', this.onSeekStart_.bind(this), false);
+  this.mediaElement_.addEventListener('seeked', this.onSeekEnd_.bind(this), false);
 
 
   /**
@@ -256,12 +281,9 @@ sampleplayer.CastPlayer = function(element) {
    */
   this.receiverManager_ = cast.receiver.CastReceiverManager.getInstance();
   this.receiverManager_.onReady = this.onReady_.bind(this);
-  this.receiverManager_.onSenderDisconnected =
-      this.onSenderDisconnected_.bind(this);
-  this.receiverManager_.onVisibilityChanged =
-      this.onVisibilityChanged_.bind(this);
-  this.receiverManager_.setApplicationState(
-      sampleplayer.getApplicationState_());
+  this.receiverManager_.onSenderDisconnected = this.onSenderDisconnected_.bind(this);
+  this.receiverManager_.onVisibilityChanged = this.onVisibilityChanged_.bind(this);
+  this.receiverManager_.setApplicationState(sampleplayer.getApplicationState_());
 
 
   /**
@@ -370,6 +392,7 @@ sampleplayer.TextTrackType = {
  */
 sampleplayer.CaptionsMimeType = {
   TTML: 'application/ttml+xml',
+  TTML2: 'application/mp4',  
   VTT: 'text/vtt'
 };
 
@@ -498,7 +521,7 @@ sampleplayer.CastPlayer.prototype.getPlayer = function() {
  * @export
  */
 sampleplayer.CastPlayer.prototype.start = function() {
-  this.receiverManager_.start();
+	//this.receiverManager_.start();
 };
 
 
@@ -598,10 +621,9 @@ sampleplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
     self.displayPreviewMode_ = false;
     self.log_('Error during preload');
   };
-    self.log_('LICENSE');
-  //host.licenseUrl = event.data.media.customData.licenseUrl;
   self.preloadPlayer_ = new cast.player.api.Player(host);
-  self.preloadPlayer_.preload(protocolFunc(host));
+  self.protocol_ = protocolFunc(host);
+  self.preloadPlayer_.preload(self.protocol_);
   return true;
 };
 
@@ -612,9 +634,14 @@ sampleplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
  * @export
  */
 sampleplayer.CastPlayer.prototype.load = function(info) {
-  this.log_('onLoad_');
+  this.log_('onLoad_'); 
+  //console.log(">>>>>>>>>>>>>>>>>>>>>> sampleplayer.CastPlayer.prototype.load");
+  //console.dir(info);
   clearTimeout(this.idleTimerId_);
   var self = this;
+  
+  
+  
   var media = info.message.media || {};
   var contentType = media.contentType;
   var playerType = sampleplayer.getType_(media);
@@ -786,6 +813,19 @@ sampleplayer.CastPlayer.prototype.loadAudio_ = function(info) {
 };
 
 
+sampleplayer.CastPlayer.prototype.OnFlowControlError = function(){
+  //console.log("[Player] >>>>>>> OnFlowControlError - Should Stop playing video");
+  document.getElementById('Error').setAttribute('state', 'on');
+  
+  this.mediaElement_.pause();
+  
+  var self = this;
+  setTimeout(function() {
+      document.getElementById('Error').setAttribute('state', 'off');  // Remove error popup after 10 secs
+      //self.setState_(sampleplayer.State.IDLE, true);
+  }, 20000);
+};
+
 /**
  * Loads some video content.
  *
@@ -798,8 +838,71 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
   var self = this;
   var protocolFunc = null;
   var url = info.message.media.contentId;
+  var customData = info.message.media.customData;
+  var licenseUrl = customData['hss_license_url'] || null;
+  var licenseCustomData = customData['hss_license_custom_data'] || null;
+  
+  this.OCS_STAT.manifesturl = url;
+  this.OCS_STAT.programid = customData['ocscontentid'] || customData['mediaObjectId'] || "";
+  this.OCS_STAT.timeframe = {start:this.getTimeSec(), stop:0};
+  
+  this.OCS_STAT.uuid = customData['userid'] || customData['useri'] || customData['devicea'];
+  
+  // Adds Greco
+  this.GRECO_STAT.cid = customData['mediaObjectId'] || "";
+  this.GRECO_STAT.token = customData['token'] || "";
+  this.GRECO_STAT.useri = customData['useri'] || "";
+  this.GRECO_STAT.userid = customData['userid'] || "";
+  this.GRECO_STAT.romid = customData['romid'] || "";
+  this.GRECO_STAT.devicea = customData['devicea'] || "";
+
+  initFlow(customData['userid'], this.OnFlowControlError.bind(this));
+
+  this.preferedLanguage = (customData['prefered_language'] || "vf").toUpperCase();
+   
+  //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> loadVideo_ USER ID:", customData['userid']);
+  //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> licenseCustomData:" + licenseCustomData);
+  
+  licenseCustomData = "";	// Remove custom data to try
+  /*
+  // DASH CLEAR CONTENT
+  url = "http://www.bok.net/dash/tears_of_steel/cleartext/stream.mpd";
+  licenseUrl = "";
+  info.message.media.contentId = url;
+  */
+  
+  /*url = "http://labgency.cdn.mediactive-network.net/cdn/ofr.ocs/v4/1992XXX0107W0098264CJITS449770-D933/C45BC635-1AF5-4A02-8007-B5CA5340B065/1992XXX0107W0098264CJITS449770-D933.C45BC635-1AF5-4A02-8007-B5CA5340B065.X.mpd";
+  licenseUrl = "http://ocu03.labgency.ws/catalog/license3?param=vod-sd";
+  info.message.media.contentId = url;*/
+  
+  
+  /*//url = "https://labgency.cdn.mediactive-network.net/cdn/ofr.ocs/v4/1992XXX0107W0098264CJITS449770-D933/C45BC635-1AF5-4A02-8007-B5CA5340B065/1992XXX0107W0098264CJITS449770-D933.C45BC635-1AF5-4A02-8007-B5CA5340B065.X.ism/Manifest";
+  url = "http://labgency.cdn.mediactive-network.net/cdn/ofr.ocs/v4/1992XXX0107W0098264CJITS449770-D933/C45BC635-1AF5-4A02-8007-B5CA5340B065/1992XXX0107W0098264CJITS449770-D933.C45BC635-1AF5-4A02-8007-B5CA5340B065.X.ism/Manifest";
+  licenseUrl = "http://ocu03.labgency.ws/catalog/license3?param=vod-sd-pr";
+  info.message.media.contentId = url;
+  */
+  
+  /*url = "http://live.cdn.mediactive-network.net/live/disk1/OCS_Choc_HD/STEP2_SMOOTH_SD/Manifest";
+  licenseUrl = "http://ocu03.labgency.ws/catalog/license3?param=live-sd";
+  info.message.media.contentId = url;*/
+  
+  
+  /*url = "http://amssamples.streaming.mediaservices.windows.net/f1ee994f-fcb8-455f-a15d-07f6f2081a60/SintelMultiAudio.ism/manifest";
+  licenseUrl = "";
+  info.message.media.contentId = url;
+   */
+  
+  /*url = "http://labgency.cdn.mediactive-network.net/cdn/ofr.ocs/v4/free/PST-2015-11-24.X.ism/Manifest";
+  licenseUrl = "";
+  info.message.media.contentId = url;*/
+  
+  
+  
+  //console.log("MESSAGE MEDIA : ", info.message.media);
+  
   var protocolFunc = sampleplayer.getProtocolFunction_(info.message.media);
   var wasPreloaded = false;
+
   this.letPlayerHandleAutoPlay_(info);
   if (!protocolFunc) {
     this.log_('loadVideo_: using MediaElement');
@@ -823,21 +926,93 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
         self.mediaElement_.dispatchEvent(new Event('error'));
       }
     };
-    if (!this.preloadPlayer_ || (this.preloadPlayer_.getHost &&
-        this.preloadPlayer_.getHost().url != url)) {
+    var onManifestReady = function(){
+      if (self.player_) {
+        var protocol = self.player_ ? self.player_.getStreamingProtocol() : null;
+        if (!protocol) {
+          return null;
+        }
+        var streamCount = protocol.getStreamCount();
+        var audioFrench = null;
+        var audioOther = null;
+        var subtitle = null;
+        for (var i = 0; i < streamCount; i++) {
+          var trackId = i + 1;
+          var streamInfo = protocol.getStreamInfo(i);
+          var mimeType = streamInfo.mimeType;
+          var track;
+          console.log("*** [Player] onManifestReady STREAM INFO ["+i+"]", streamInfo);
+          if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {           
+            subtitle = i;
+          } else if (mimeType.indexOf(sampleplayer.TrackType.VIDEO) === 0) {
+            
+          } else if (mimeType.indexOf(sampleplayer.TrackType.AUDIO) === 0) {
+            
+            if (streamInfo.language !== null && streamInfo.language.substring(0, 2).toUpperCase() == "FR"){
+              audioFrench = i;
+            }else{
+              audioOther = i;
+            }
+          }
+        }
+        
+        if (self.preferedLanguage != null){			
+		  // check if it's the movie has only one audio track ( VF or VOST with incrusted subtitle) to force the preferedLanguage to VF
+		  if ((audioFrench==null || audioOther==null) && subtitle==null)
+			self.preferedLanguage = "VF"; 
+		
+          if (self.preferedLanguage.toUpperCase() == "VF"){
+            if (subtitle != null){
+              if (protocol.isStreamEnabled(subtitle)) protocol.enableStream(subtitle, false);
+            }
+            if (audioOther != null){
+              if (protocol.isStreamEnabled(audioOther)) protocol.enableStream(audioOther, false);
+            }
+			if (audioFrench == null && audioOther != null)
+				audioFrench = audioOther;
+            if (audioFrench != null){
+              if (!protocol.isStreamEnabled(audioFrench)) protocol.enableStream(audioFrench, true);
+            }
+          }else{
+            if (subtitle != null){
+              if (!protocol.isStreamEnabled(subtitle)) protocol.enableStream(subtitle, true);
+            }
+            if (audioFrench != null){
+              if (protocol.isStreamEnabled(audioFrench)) protocol.enableStream(audioFrench, false);
+            }
+            if (audioOther != null){
+              if (!protocol.isStreamEnabled(audioOther)) protocol.enableStream(audioOther, true);
+            }
+          }
+        }
+      }
+    }
+    if (!this.preloadPlayer_ || (this.preloadPlayer_.getHost && this.preloadPlayer_.getHost().url != url)) {
       if (this.preloadPlayer_) {
         this.preloadPlayer_.unload();
         this.preloadPlayer_ = null;
       }
       this.log_('Regular video load');
+      //console.log(">>>>>>>>> CREATING HOST")
       var host = new cast.player.api.Host({
         'url': url,
+        'licenseUrl': licenseUrl,
+        'licenseCustomData': licenseCustomData,
         'mediaElement': this.mediaElement_
       });
+      host.updateManifestRequestInfo = function(requestInfo) {
+        requestInfo.timeoutInterval = 5000;
+      };
+      //host.autoResumeDuration = 15;
+      
+      //required to select languague before we start loading any data
+      host.onManifestReady = onManifestReady;
+      //host.initialBandwidth = 600000;
+      //console.log("HOST VALUES" , host); 
       host.onError = loadErrorCallback;
-      host.licenseUrl = info.message.media.customData.licenseUrl;
       this.player_ = new cast.player.api.Player(host);
-      this.player_.load(protocolFunc(host));
+      this.protocol_ = protocolFunc(host);
+      this.player_.load(this.protocol_);
     } else {
       this.log_('Preloaded video load');
       this.player_ = this.preloadPlayer_;
@@ -891,6 +1066,7 @@ sampleplayer.CastPlayer.prototype.readSideLoadedTextTrackType_ =
   if (!info.message || !info.message.media || !info.message.media.tracks) {
     return;
   }
+  
   for (var i = 0; i < info.message.media.tracks.length; i++) {
     var oldTextTrackType = this.textTrackType_;
     if (info.message.media.tracks[i].type !=
@@ -975,8 +1151,7 @@ sampleplayer.CastPlayer.prototype.maybeLoadEmbeddedTracksMetadata_ =
  * @param {!Array.<cast.receiver.media.Track>} tracks The track definitions.
  * @private
  */
-sampleplayer.CastPlayer.prototype.processTtmlCues_ =
-    function(activeTrackIds, tracks) {
+sampleplayer.CastPlayer.prototype.processTtmlCues_ = function(activeTrackIds, tracks) {
   if (activeTrackIds.length == 0) {
     return;
   }
@@ -1003,8 +1178,7 @@ sampleplayer.CastPlayer.prototype.processTtmlCues_ =
       this.protocol_ = null;
       this.player_ = new cast.player.api.Player(host);
     }
-    this.player_.enableCaptions(
-        true, cast.player.api.CaptionsType.TTML, tracks[i].trackContentId);
+    this.player_.enableCaptions(true, cast.player.api.CaptionsType.TTML, tracks[i].trackContentId);
   }
 };
 
@@ -1076,6 +1250,8 @@ sampleplayer.CastPlayer.prototype.processInBandTracks_ =
     function(activeTrackIds) {
   var protocol = this.player_.getStreamingProtocol();
   var streamCount = protocol.getStreamCount();
+  var hasText = false;
+  var changed = false;
   for (var i = 0; i < streamCount; i++) {
     var trackId = i + 1;
     var isActive = false;
@@ -1085,13 +1261,21 @@ sampleplayer.CastPlayer.prototype.processInBandTracks_ =
         break;
       }
     }
+	
+    var streamInfo = protocol.getStreamInfo(i);
+    var isText = (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2)?true:false;
     var wasActive = protocol.isStreamEnabled(i);
     if (isActive && !wasActive) {
       protocol.enableStream(i, true);
+      if (isText) hasText = true;
+      changed = true;
     } else if (!isActive && wasActive) {
       protocol.enableStream(i, false);
+      changed = true;
     }
   }
+  //this.player_.enableCaptions(hasText);
+  return changed;
 };
 
 
@@ -1109,24 +1293,28 @@ sampleplayer.CastPlayer.prototype.readInBandTracksInfo_ = function() {
   var streamCount = protocol.getStreamCount();
   var activeTrackIds = [];
   var tracks = [];
+  var audioFrench = null;
+  var audioOther = null;
+  var subtitle = null;
   for (var i = 0; i < streamCount; i++) {
     var trackId = i + 1;
-    if (protocol.isStreamEnabled(i)) {
-      activeTrackIds.push(trackId);
-    }
     var streamInfo = protocol.getStreamInfo(i);
     var mimeType = streamInfo.mimeType;
     var track;
-    if (mimeType.indexOf(sampleplayer.TrackType.TEXT) === 0 ||
-        mimeType === sampleplayer.CaptionsMimeType.TTML) {
-      track = new cast.receiver.media.Track(
-          trackId, cast.receiver.media.TrackType.TEXT);
+    if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {
+      track = new cast.receiver.media.Track(trackId, cast.receiver.media.TrackType.TEXT);
+      subtitle = i;
     } else if (mimeType.indexOf(sampleplayer.TrackType.VIDEO) === 0) {
       track = new cast.receiver.media.Track(
           trackId, cast.receiver.media.TrackType.VIDEO);
     } else if (mimeType.indexOf(sampleplayer.TrackType.AUDIO) === 0) {
       track = new cast.receiver.media.Track(
           trackId, cast.receiver.media.TrackType.AUDIO);
+      if (streamInfo.language !== null && streamInfo.language.substring(0, 2).toUpperCase() == "FR"){
+        audioFrench = i;
+      }else{
+        audioOther = i;
+      }
     }
     if (track) {
       track.name = streamInfo.name;
@@ -1137,6 +1325,35 @@ sampleplayer.CastPlayer.prototype.readInBandTracksInfo_ = function() {
   }
   if (tracks.length === 0) {
     return null;
+  }
+  // if (this.preferedLanguage != null){
+  //   if (this.preferedLanguage.toUpperCase() == "VF"){
+  //     if (subtitle != null){
+  //       protocol.enableStream(subtitle, false);
+  //     }
+  //     if (audioOther != null){
+  //       protocol.enableStream(audioOther, false);
+  //     }
+  //     if (audioFrench != null){
+  //       protocol.enableStream(audioFrench, true);
+  //     }
+  //   }else{
+  //     if (subtitle != null){
+  //       protocol.enableStream(subtitle, true);
+  //     }
+  //     if (audioFrench != null){
+  //       protocol.enableStream(audioFrench, false);
+  //     }
+  //     if (audioOther != null){
+  //       protocol.enableStream(audioFrench, true);
+  //     }
+  //   }
+  // }
+  for (var i = 0; i < streamCount; i++) {
+    var trackId = i + 1;
+    if (protocol.isStreamEnabled(i)) {
+      activeTrackIds.push(trackId);
+    }
   }
   var tracksInfo = /** @type {cast.receiver.media.TracksInfo} **/ ({
     tracks: tracks,
@@ -1214,18 +1431,38 @@ sampleplayer.CastPlayer.prototype.setType_ = function(type, isLiveStream) {
  * @param {number=} opt_delay the amount of time (in ms) to wait
  * @private
  */
-sampleplayer.CastPlayer.prototype.setState_ = function(
-    state, opt_crossfade, opt_delay) {
-  this.log_('setState_: state=' + state + ', crossfade=' + opt_crossfade +
-      ', delay=' + opt_delay);
+sampleplayer.CastPlayer.prototype.setState_ = function(state, opt_crossfade, opt_delay) {
+  this.log_('============================= setState_: state=' + state + ', crossfade=' + opt_crossfade + ', delay=' + opt_delay+" reloadRequested:"+ReloadRequested);
+  
   var self = this;
+  
+  if(ReloadRequested){
+	  if(state == sampleplayer.State.PLAYING){
+		  ReloadRequested = false;
+		  self.element_.setAttribute('reload', "");
+		  this.mediaElement_.play();
+	  } else {
+		  return;
+	  }
+		
+  }
+  
   self.lastStateTransitionTime_ = Date.now();
-  clearTimeout(self.delay_);
+  if (sampleplayer.delay_){
+    clearTimeout(sampleplayer.delay_);
+    sampleplayer.delay_ = null;
+  }
   if (opt_delay) {
-    var func = function() { self.setState_(state, opt_crossfade); };
-    self.delay_ = setTimeout(func, opt_delay);
+    var func = function() { 
+      self.setState_(state, opt_crossfade); 
+    };
+    if (sampleplayer.delay_){
+      clearTimeout(sampleplayer.delay_);
+      sampleplayer.delay_ = null;
+    }
+    sampleplayer.delay_ = setTimeout(func, opt_delay);
   } else {
-    if (!opt_crossfade) {
+    if (!opt_crossfade || true) { //disable crossfade
       self.state_ = state;
       self.element_.setAttribute('state', state);
       self.updateApplicationState_();
@@ -1255,15 +1492,19 @@ sampleplayer.CastPlayer.prototype.setState_ = function(
  * @private
  */
 sampleplayer.CastPlayer.prototype.updateApplicationState_ = function() {
-  this.log_('updateApplicationState_');
+  this.log_('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> updateApplicationState_');
   if (this.mediaManager_) {
     var idle = this.state_ === sampleplayer.State.IDLE;
     var media = idle ? null : this.mediaManager_.getMediaInformation();
     var applicationState = sampleplayer.getApplicationState_(media);
-    if (this.currentApplicationState_ != applicationState) {
+    
+    //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> [updateApplicationState_] applicationState:"+applicationState+" currentApplicationState_:"+this.currentApplicationState_);
+    
+    //if (this.currentApplicationState_ != applicationState) {
       this.currentApplicationState_ = applicationState;
       this.receiverManager_.setApplicationState(applicationState);
-    }
+      //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> [updateApplicationState_] SET applicationState:"+applicationState);
+    //}
   }
 };
 
@@ -1276,6 +1517,7 @@ sampleplayer.CastPlayer.prototype.updateApplicationState_ = function() {
  */
 sampleplayer.CastPlayer.prototype.onReady_ = function() {
   this.log_('onReady');
+  //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>  ON READY Will set IDLE STATE");
   this.setState_(sampleplayer.State.IDLE, false);
 };
 
@@ -1307,7 +1549,12 @@ sampleplayer.CastPlayer.prototype.onSenderDisconnected_ = function(event) {
  * @private
  */
 sampleplayer.CastPlayer.prototype.onError_ = function(error) {
-  this.log_('onError');
+  this.log_('onError',error);
+  
+  var cptErrors = this.OCS_STAT.errorstatus.count && this.OCS_STAT.errorstatus.count > 0 ? this.OCS_STAT.errorstatus.count+1 : 1;
+  this.OCS_STAT.errorstatus = {lastype:error.type, lastcode:error.code, lastdate:this.getTimeSec(), lastposition:Math.round(this.mediaElement_.currentTime), count:cptErrors};
+  this.sendStats();
+  
   var self = this;
   sampleplayer.transition_(self.element_, sampleplayer.TRANSITION_DURATION_,
       function() {
@@ -1325,6 +1572,16 @@ sampleplayer.CastPlayer.prototype.onError_ = function(error) {
  */
 sampleplayer.CastPlayer.prototype.onBuffering_ = function() {
   this.log_('onBuffering[readyState=' + this.mediaElement_.readyState + ']');
+  
+  
+  
+  var cptBuffering = this.OCS_STAT.buffering.count && this.OCS_STAT.buffering.count > 0 ? this.OCS_STAT.buffering.count+1 : 1;
+  this.OCS_STAT.buffering = {
+		  first: this.getTimeSec(), 
+		  last:0, 
+		  count:cptBuffering
+  };
+  
   if (this.state_ === sampleplayer.State.PLAYING &&
       this.mediaElement_.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
     this.setState_(sampleplayer.State.BUFFERING, false);
@@ -1344,7 +1601,40 @@ sampleplayer.CastPlayer.prototype.onPlaying_ = function() {
   var isAudio = this.type_ == sampleplayer.Type.AUDIO;
   var isLoading = this.state_ == sampleplayer.State.LOADING;
   var crossfade = isLoading && !isAudio;
-  this.setState_(sampleplayer.State.PLAYING, crossfade);
+  if (this.state_ != sampleplayer.State.PLAYING) this.setState_(sampleplayer.State.PLAYING, crossfade);
+
+  document.getElementById('Error').setAttribute('state', 'off');  // Hides error div in case of restart streaming after error popup
+  
+  // Tricks to avoid going to idle state while playing BUG #33238 
+  clearTimeout(this.idleTimerId_);
+  
+  this.OCS_STAT.lastevent = {value:'playing', date:this.getTimeSec(), position:Math.round(this.mediaElement_.currentTime)};
+  if(this.OCS_STAT.buffering.last == 0){	// Playing state coming from buffering, we register last time 
+	  this.OCS_STAT.buffering.last = this.getTimeSec();
+  }
+  this.STAT_playStartPosition = Math.round(this.mediaElement_.currentTime);
+  this.STAT_VideoMaxProfileTimer = null;
+  this.STAT_VideoGlobalProfileTimer = null
+  /*
+  var tracks = document.querySelectorAll("track");
+
+  if (tracks.length > 0 ) {
+    for (var i = 0;i < tracks.length;i++) {
+      tracks[i].track.oncuechange = function() {
+        if (this.activeCues.length > 0) { 
+          this.activeCues[0].position = 50; 
+          this.activeCues[0].line = -3;  
+          this.activeCues[0].size = 100; 
+          
+          //var subStr = this.activeCues[0].text;
+          //if((subStr.match(/\n/g) || []).length == 1){	// Fix to display single line subtitles lower on the screen
+          //  this.activeCues[0].text = "\n" + subStr;
+          //}
+        }
+      }
+    }
+  }
+  */
 };
 
 
@@ -1361,8 +1651,13 @@ sampleplayer.CastPlayer.prototype.onPause_ = function() {
   var isIdle = this.state_ === sampleplayer.State.IDLE;
   var isDone = this.mediaElement_.currentTime === this.mediaElement_.duration;
   var isUnderflow = this.player_ && this.player_.getState()['underflow'];
+  //console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& onPause_ > isUnderflow:' + isUnderflow);
+  
+  this.OCS_STAT.lastevent = {value:'paused', date:this.getTimeSec(), position:Math.round(this.mediaElement_.currentTime)};
+  this.sendStats();
+  
   if (isUnderflow) {
-    this.log_('isUnderflow');
+    //console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& IS UNDERFLOW > this Should put Buffering state');
     this.setState_(sampleplayer.State.BUFFERING, false);
     this.mediaManager_.broadcastStatus(/* includeMedia */ false);
   } else if (!isIdle && !isDone) {
@@ -1381,8 +1676,7 @@ sampleplayer.CastPlayer.prototype.onPause_ = function() {
  *
  * @private
  */
-sampleplayer.CastPlayer.prototype.customizedStatusCallback_ = function(
-    mediaStatus) {
+sampleplayer.CastPlayer.prototype.customizedStatusCallback_ = function(mediaStatus) {
   this.log_('customizedStatusCallback_: playerState=' +
       mediaStatus.playerState + ', this.state_=' + this.state_);
   // TODO: remove this workaround once MediaManager detects buffering
@@ -1406,8 +1700,13 @@ sampleplayer.CastPlayer.prototype.onStop_ = function(event) {
   this.log_('onStop');
   this.cancelDeferredPlay_('media is stopped');
   var self = this;
+  
+  this.OCS_STAT.lastevent = {value:'stopped', date:this.getTimeSec(), position:Math.round(this.mediaElement_.currentTime)};
+  this.sendStats();
+  
   sampleplayer.transition_(self.element_, sampleplayer.TRANSITION_DURATION_,
       function() {
+        //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>  ON STOP Will set IDLE STATE");
         self.setState_(sampleplayer.State.IDLE, false);
         self.onStopOrig_(event);
       });
@@ -1421,6 +1720,11 @@ sampleplayer.CastPlayer.prototype.onStop_ = function(event) {
  */
 sampleplayer.CastPlayer.prototype.onEnded_ = function() {
   this.log_('onEnded');
+  //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>  ON ENDED Will set IDLE STATE");
+  this.OCS_STAT.lastevent = {value:'ended', date:this.getTimeSec(), position:Math.round(this.mediaElement_.currentTime)};
+  this.sendStats();
+
+  
   this.setState_(sampleplayer.State.IDLE, true);
   this.hidePreviewMode_();
 };
@@ -1433,8 +1737,11 @@ sampleplayer.CastPlayer.prototype.onEnded_ = function() {
  */
 sampleplayer.CastPlayer.prototype.onAbort_ = function() {
   this.log_('onAbort');
-  this.setState_(sampleplayer.State.IDLE, true);
-  this.hidePreviewMode_();
+  //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>  ON ABORT Will set IDLE STATE");
+  if (!sampleplayer.transitioning){
+    this.setState_(sampleplayer.State.IDLE, false, 3000); //delay abort for smoother transitions
+    this.hidePreviewMode_();
+  }
 };
 
 
@@ -1460,6 +1767,7 @@ sampleplayer.CastPlayer.prototype.onProgress_ = function() {
  * @private
  */
 sampleplayer.CastPlayer.prototype.updateProgress_ = function() {
+try{
   // Update the time and the progress bar
   if (!sampleplayer.isCastForAudioDevice_()) {
     var curTime = this.mediaElement_.currentTime;
@@ -1474,8 +1782,59 @@ sampleplayer.CastPlayer.prototype.updateProgress_ = function() {
       if (this.displayPreviewMode_) {
         this.previewModeTimerElement_.innerText = "" + Math.round(totalTime-curTime);
       }
+     
+      if(this.player_ != null){
+    	  if(this.STAT_VideoStreamInfos == null){
+	    	  for(var i = 0; i <= 4; i++){
+	    		  var streamInfos = this.player_.getStreamingProtocol().getStreamInfo(i);
+	    		  if(streamInfos.name == "video"){
+	    			  this.STAT_VideoStreamInfos = {bitrates:streamInfos.bitrates, index:i};
+	    			  break;
+	    		  }
+	    	  }
+	      }
+    	  
+    	  // Get Current Video bitrate
+	      if(this.STAT_VideoStreamInfos != null && this.STAT_VideoStreamInfos.index >=0){
+	    	  var qualityLevel = this.player_.getStreamingProtocol().getQualityLevel(this.STAT_VideoStreamInfos.index);
+	    	  if(qualityLevel >=0 ){
+	    		  var bitratestatus = this.OCS_STAT.bitratestatus;
+	    		  var qualityLevelBandwidth = this.STAT_VideoStreamInfos.bitrates[qualityLevel];
+	    		  //console.log("OCSSTATS qualityLevelBandwidth:" + qualityLevelBandwidth+" STAT_VideoStreamInfosOldBandwidth:"+this.STAT_VideoStreamInfosOldBandwidth);
+	    		  
+	    		  if(qualityLevelBandwidth >= bitratestatus.maxbitrate){
+	    			  var deltaT = (this.STAT_VideoMaxProfileTimer == null) ? 0 : this.getTimeSec() - this.STAT_VideoMaxProfileTimer;
+		    		    
+	    			  bitratestatus.maxbitrate = qualityLevelBandwidth;
+	    			  bitratestatus.maxbitrateduration += deltaT;
+	    			  
+	    			  if(this.STAT_VideoStreamInfosOldBandwidth < qualityLevelBandwidth){
+	    				  bitratestatus.count++;
+	    			  }
+	    			  
+	    			  this.STAT_VideoMaxProfileTimer = this.getTimeSec();
+	    			  
+	    			  this.OCS_STAT.bitratestatus = bitratestatus;
+	    			  //console.log(">>>>>>>>>>>>>OCSSTATS update BitrateStatus : ", this.OCS_STAT.bitratestatus);
+	    		  } else {
+	    			  this.STAT_VideoMaxProfileTimer = null;
+	    		  }
+	    		  
+	    		  var globalDeltaT = (this.STAT_VideoGlobalProfileTimer == null) ? 0 : this.getTimeSec() - this.STAT_VideoGlobalProfileTimer;
+	    		  if(this.STAT_profileuseStack[qualityLevelBandwidth] == undefined){
+	    			  this.STAT_profileuseStack[qualityLevelBandwidth] = 0;
+	                }
+	    		  this.STAT_profileuseStack[qualityLevelBandwidth] += globalDeltaT;
+	    		  //console.log("Update profileuse", this.STAT_profileuseStack);
+	    		  this.STAT_VideoGlobalProfileTimer = this.getTimeSec();
+	    	  }
+	      }
+      }
     }
   }
+}catch(e){
+
+}
 };
 
 
@@ -1501,6 +1860,7 @@ sampleplayer.CastPlayer.prototype.onSeekEnd_ = function() {
   clearTimeout(this.seekingTimeoutId_);
   this.seekingTimeoutId_ = sampleplayer.addClassWithTimeout_(this.element_,
       'seeking', 3000);
+  this.OCS_STAT.lastevent = {value:'seek', date:this.getTimeSec(), position:Math.round(this.mediaElement_.currentTime)};
 };
 
 
@@ -1562,8 +1922,15 @@ sampleplayer.CastPlayer.prototype.onCancelPreload_ = function(event) {
  * @private
  */
 sampleplayer.CastPlayer.prototype.onLoad_ = function(event) {
-  this.log_('onLoad_');
   this.cancelDeferredPlay_('new media is loaded');
+  
+  if(this.player_){
+	  this.player_.unload();
+	  this.player_ = null;
+  }
+
+  sampleplayer.transitioning = false;
+  
   this.load(new cast.receiver.MediaManager.LoadInfo(
       /** @type {!cast.receiver.MediaManager.LoadRequestData} */ (event.data),
       event.senderId));
@@ -1585,6 +1952,7 @@ sampleplayer.CastPlayer.prototype.onEditTracksInfo_ = function(event) {
   if (!event.data || !event.data.activeTrackIds || !this.textTrackType_) {
     return;
   }
+  var changed = false;
   var mediaInformation = this.mediaManager_.getMediaInformation() || {};
   var type = this.textTrackType_;
   if (type == sampleplayer.TextTrackType.SIDE_LOADED_TTML) {
@@ -1596,10 +1964,16 @@ sampleplayer.CastPlayer.prototype.onEditTracksInfo_ = function(event) {
     this.processTtmlCues_(event.data.activeTrackIds,
         mediaInformation.tracks || []);
   } else if (type == sampleplayer.TextTrackType.EMBEDDED) {
-    this.player_.enableCaptions(false);
-    this.processInBandTracks_(event.data.activeTrackIds);
-    this.player_.enableCaptions(true);
+    //this.player_.enableCaptions(false);
+    changed = this.processInBandTracks_(event.data.activeTrackIds);
+    //this.player_.enableCaptions(true);
   }
+
+  if (changed){
+    sampleplayer.transitioning = true;
+    this.player_.reload();
+  }
+  
 };
 
 
@@ -1611,24 +1985,26 @@ sampleplayer.CastPlayer.prototype.onEditTracksInfo_ = function(event) {
  * @private
  */
 sampleplayer.CastPlayer.prototype.onMetadataLoaded_ = function(info) {
-  this.log_('onMetadataLoaded');
+  this.log_('###onMetadataLoaded');
+  //this.onMetadataLoadedOrig_(info);
   this.onLoadSuccess_();
+  
+  this.OCS_STAT.lastevent = {value:'loaded', date:this.getTimeSec(), position:0};
+  this.OCS_STAT.bitratestatus = {maxbitrate:0, maxbitrateduration:0, count:0, maxbandwith:0};
+  
   // In the case of ttml and embedded captions we need to load the cues using
   // MPL.
   this.readSideLoadedTextTrackType_(info);
 
-  if (this.textTrackType_ ==
-      sampleplayer.TextTrackType.SIDE_LOADED_TTML &&
-      info.message && info.message.activeTrackIds && info.message.media &&
-      info.message.media.tracks) {
-    this.processTtmlCues_(
-        info.message.activeTrackIds, info.message.media.tracks);
+  if (this.textTrackType_ == sampleplayer.TextTrackType.SIDE_LOADED_TTML && info.message && info.message.activeTrackIds && info.message.media && info.message.media.tracks) {
+    this.processTtmlCues_(info.message.activeTrackIds, info.message.media.tracks);
   } else if (!this.textTrackType_) {
     // If we do not have a textTrackType, check if the tracks are embedded
     this.maybeLoadEmbeddedTracksMetadata_(info);
   }
   // Only send load completed when we have completed the player LOADING state
   this.metadataLoaded_ = true;
+  
   this.maybeSendLoadCompleted_(info);
 };
 
@@ -1701,8 +2077,7 @@ sampleplayer.CastPlayer.prototype.onLoadSuccess_ = function() {
   // and progress bar
   var totalTime = this.mediaElement_.duration;
   if (!isNaN(totalTime)) {
-    this.totalTimeElement_.textContent =
-        sampleplayer.formatDuration_(totalTime);
+    this.totalTimeElement_.textContent = sampleplayer.formatDuration_(totalTime);
   } else {
     this.totalTimeElement_.textContent = '';
     this.progressBarInnerElement_.style.width = '100%';
@@ -1749,6 +2124,8 @@ sampleplayer.getProtocolFunction_ = function(mediaInformation) {
   } else if (path.indexOf('.ism') > -1 ||
           type === 'application/vnd.ms-sstr+xml') {
     return cast.player.api.CreateSmoothStreamingProtocol;
+  } else {
+	  return cast.player.api.CreateSmoothStreamingProtocol;
   }
   return null;
 };
@@ -2023,11 +2400,11 @@ sampleplayer.getExtension_ = function(url) {
  */
 sampleplayer.getApplicationState_ = function(opt_media) {
   if (opt_media && opt_media.metadata && opt_media.metadata.title) {
-    return 'Now Casting: ' + opt_media.metadata.title;
+    return 'Diffusion en cours: ' + opt_media.metadata.title;
   } else if (opt_media) {
-    return 'Now Casting';
+    return 'Diffusion en cours';
   } else {
-    return 'Ready To Cast';
+    return 'Prêt à diffuser';
   }
 };
 
@@ -2053,9 +2430,9 @@ sampleplayer.getPath_ = function(url) {
  * @private
  */
 sampleplayer.CastPlayer.prototype.log_ = function(message) {
-  //if (this.debug_ && message) {
-    console.log(message);
-  //}
+  if (this.debug_ && message) {
+    //console.log(message);
+  }
 };
 
 
@@ -2107,3 +2484,276 @@ sampleplayer.isCastForAudioDevice_ = function() {
   }
   return false;
 };
+
+
+sampleplayer.CastPlayer.prototype.selectTrackByIndex = function(audioIdx, subIdx) {
+  //console.log("[Castplayer] selectTrackByIndex with params > audioIdx:" + audioIdx +  " subIdx:" + subIdx);
+};
+
+sampleplayer.CastPlayer.prototype.selectTrack = function(audioIdx, subIdx, license_url, custom_data) {
+  if (!this.player_ || this.protocol_.getStreamCount() == 0) {
+    //console.log("no player to set tracks, or not ready yet");
+    return;
+  }
+	
+	var streamCount = this.protocol_.getStreamCount();	
+	var tracks = [];
+	var currentAudio = null;
+	var currentSub = null;
+	var nextAudio = null;
+	var nextSub = null;
+
+	for (var i = 0; i < streamCount; i++) {
+		var streamInfo = this.protocol_.getStreamInfo(i);
+		//console.log("*** [Player] selectTrack STREAM INFO ["+i+"]", streamInfo);
+		var streamIdx = i;
+		if (streamInfo.mimeType.indexOf('audio') === 0){
+			if(this.protocol_.isStreamEnabled(streamIdx))
+				currentAudio = streamIdx;
+			if(audioIdx == streamIdx){
+				//console.log("*** [Player] selectTrack  / Will Select AUDIO :" + streamInfo.mimeType+" i:"+i+" audio:"+audioIdx, streamInfo);
+				nextAudio = streamIdx;
+			}
+		} else if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {
+			if(this.protocol_.isStreamEnabled(streamIdx))
+				currentSub = streamIdx;
+			if(subIdx == streamIdx){
+				//console.log("*** [Player] selectTrack  / Will Select SUB : " + streamInfo.mimeType+" i:"+i+" sub:"+subIdx, streamInfo);
+				nextSub = streamIdx;
+			}
+		}
+	}
+
+	// SUBS
+	if(currentSub != null){ // Disable current sub track
+		this.protocol_.enableStream(currentSub, false); 
+	}
+
+	if(nextSub != null){
+		//console.log("*** [Player] selectTrack SELECT SUB IDX: ", nextSub);
+		this.protocol_.enableStream(nextSub, true);
+		this.player_.enableCaptions(true);
+	} else {
+		this.player_.enableCaptions(false);
+	}
+
+	// AUDIO
+	if(currentAudio != null){  // Disable current audio track
+		this.protocol_.enableStream(currentAudio, false);
+	}
+	
+	if(nextAudio != null){
+    //console.log("*** [Player] selectTrack SELECT AUDIO IDX: ", nextAudio);
+		this.protocol_.enableStream(nextAudio, true);
+	}
+	
+
+	//console.log("*** [Player] selectTrack END WIDTH : AUDIO current:" + currentAudio+" next:"+nextAudio+" /// SUBS current:" + currentSub+" next:"+nextSub);
+
+	this.setState_(sampleplayer.State.BUFFERING, false);
+	this.mediaElement_.pause();
+  	this.mediaManager_.broadcastStatus(false);
+    
+	ReloadRequested = true;
+	this.element_.setAttribute('reload', "true");
+	
+	
+	var selfPlayer = this.player_;
+  
+	setTimeout(function(){
+    selfPlayer.reload();
+  }, 500);
+
+//  this.player_.reload();
+};
+
+sampleplayer.CastPlayer.prototype.selectTrackByLang = function(audioLang, subLang) {
+  if (!this.player_ || this.protocol_.getStreamCount() == 0) {
+    return;
+  }
+  //console.log("[Player] selectTrackByLang with params > audio:" + audioLang +  " sub:" + subLang+" StreamCount:"+this.protocol_.getStreamCount());
+  
+  var streamCount = this.protocol_.getStreamCount();
+  
+  var tracks = [];
+  var currentAudio = null;
+  var currentSub = null;
+  var nextAudio = null;
+  var nextSub = null;
+
+  for (var i = 0; i < streamCount; i++) {
+    var streamInfo = this.protocol_.getStreamInfo(i);   
+    //console.log("STREAM INFO ["+i+"]", streamInfo);
+
+    if (streamInfo.mimeType.indexOf('audio') === 0){
+      if(this.protocol_.isStreamEnabled(i))
+        currentAudio = i;
+      if(streamInfo.language.substring(0,2) == audioLang){
+        //console.log("[Player] selectTrack / Will Select AUDIO :" + streamInfo.mimeType+" i:"+i+" audio:"+streamInfo.language, streamInfo);
+        nextAudio = i;
+      }
+    } else if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {
+      if(this.protocol_.isStreamEnabled(i))
+        currentSub = i;
+      if(subLang != ""){
+        //console.log("[Player] selectTrack / Will Select SUB : " + streamInfo.mimeType+" i:"+i+" sub:"+streamInfo.language, streamInfo);
+        nextSub = i;
+      }
+    }
+  }
+
+  // SUBS
+  if(currentSub != null){ // Disable current sub track
+    this.protocol_.enableStream(currentSub, false); 
+  }
+
+  if(nextSub != null){
+    this.protocol_.enableStream(nextSub, true);
+    this.player_.enableCaptions(true);
+  } else {
+    this.player_.enableCaptions(false);
+  }
+  
+  
+  if(currentAudio == nextAudio && currentSub == nextSub)  // No change on tracks...
+    return;
+  
+  // AUDIO
+  if(currentAudio != null){  // Disable current audio track
+    this.protocol_.enableStream(currentAudio, false);
+  }
+  
+  if(nextAudio != null){
+    this.protocol_.enableStream(nextAudio, true);
+  }
+  
+  //console.log("[Player] selectTrackByLang END WIDTH : AUDIO current:" + currentAudio+" next:"+nextAudio+" /// SUBS current:" + currentSub+" next:"+nextSub);
+
+  this.setState_(sampleplayer.State.BUFFERING, false);
+  this.mediaElement_.pause();
+  this.mediaManager_.broadcastStatus(false);
+    
+  ReloadRequested = true;
+  this.element_.setAttribute('reload', "true");
+  this.player_.reload();
+
+};
+
+sampleplayer.CastPlayer.prototype.getTracks = function() {
+	if (/*this.loadInfo_ === null || */this.player_ === null || this.protocol_ === null) {
+		//console.log('getTracks before playing state');
+		return null;
+	} else {
+		//console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getTracks IN PLAYING STATE');
+		//console.dir("PROTOCOL:", this.protocol_);
+		var current;		
+		var streamCount = this.protocol_.getStreamCount();		
+		var tracks = [];
+		
+		for (var i = 0; i < streamCount; i++) {
+			var streamInfo = this.protocol_.getStreamInfo(i);
+			if (streamInfo.mimeType.indexOf('audio') === 0) {
+				var track = {};
+				track.index = i;
+				track.mimeType = "audio/mp4";
+				track.selected = this.protocol_.isStreamEnabled(i);
+				track.language = streamInfo.language ? streamInfo.language : "und";
+				tracks.push(track);					
+				//console.log('track ' + i + ' of type ' + track.mimeType + ' language  ' + track.language + ' is selected ? ' + track.selected);
+			} else if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {
+				var track = {};
+				track.index = i;
+				track.mimeType = "text/mp4";
+				track.selected = this.protocol_.isStreamEnabled(i);
+				track.language = streamInfo.language ? streamInfo.language : "und";
+				tracks.push(track);					
+				//console.log('track ' + i + ' of type ' + track.mimeType + ' language  ' + track.language + ' is selected ? ' + track.selected);
+			}
+    }
+		return tracks;
+	}
+};
+
+sampleplayer.CastPlayer.prototype.getTimeSec = function(){
+	return Math.round(new Date().getTime()/1000);
+};
+
+sampleplayer.CastPlayer.prototype.sendStats = function(){
+	if(this.OCS_STAT.manifesturl != ""){	// Tricks to avoid sending stats twice (for some reason, pause/stop/ended events are thrown twice...
+		this.OCS_STAT.timeframe.stop = this.getTimeSec();
+		//console.log('>>>>> CastPlayer sendStats', this.OCS_STAT);
+		var xhr = new XMLHttpRequest();
+		var jsonStats = JSON.stringify(this.OCS_STAT);
+		
+		xhr.open("POST", this.OCS_STAT_URL, true);
+		xhr.setRequestHeader('Content-Type', 'application/json');
+		xhr.onreadystatechange = function() {//Call a function when the state changes.
+		    if(xhr.readyState == 4 && xhr.status == 200) {
+		        console.log("OCS_STAT SEND stat succeed");
+		    }/* else {
+		    	console.log("OCS_STAT SEND xhr.readyState:"+xhr.readyState+" xhr.status:"+xhr.status+" response:"+xhr.responseText);
+		    }*/
+		}
+		xhr.send(jsonStats);
+		
+		// Send stats for greco
+		this.sendGrecoStats();
+	}
+	
+
+	
+	
+};
+
+sampleplayer.CastPlayer.prototype.sendGrecoStats = function(){
+	var statValues = this.formatGrecoStat();
+	
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", this.GRECO_STAT_URL + statValues,true);
+	xhr.onreadystatechange = function() {//Call a function when the state changes.
+	    if(xhr.readyState == 4 && xhr.status == 200) {
+	    	console.log("GRECO_STAT SEND greco stat succeed");
+	    }/* else {
+	    	console.log("GRECO_STAT SEND xhr.readyState:"+xhr.readyState+" xhr.status:"+xhr.status+" response:"+xhr.responseText);
+	    }*/
+	}
+	xhr.send();
+}
+
+sampleplayer.CastPlayer.prototype.formatGrecoStat = function(){
+    var now = new Date();
+    
+    var statStr = "detail=&message=&code=0&status=ok&lgy-level=2&v="+this.version_+"&type=streaming";
+    
+    var buffering = 0;
+    
+    var profileuseArr = [];
+    for(var i in this.STAT_profileuseStack){
+        profileuseArr[profileuseArr.length] = i+":"+this.STAT_profileuseStack[i];
+    }    
+    var profileuse = profileuseArr.join(',');
+    
+    statStr += "&s=ofr.ocs";
+    statStr += "&e=player";
+    statStr += "&m=play";
+    statStr += "&c=" + this.GRECO_STAT.cid;
+    statStr += "&t=" + this.GRECO_STAT.token;
+    statStr += "&type=streaming";
+    statStr += "&user-id=" + this.GRECO_STAT.userid;
+    statStr += "&user-i=" + this.GRECO_STAT.useri;
+    statStr += "&url=" + this.OCS_STAT.manifesturl;
+    statStr += "&device-a=" + this.GRECO_STAT.devicea;
+    statStr += "&rom-id=" + this.GRECO_STAT.romid;
+    statStr += "&play-duration=" + Math.round(this.mediaElement_.currentTime - this.STAT_playStartPosition);
+    statStr += "&play-start-position=" + Math.floor(this.STAT_playStartPosition);
+    statStr += "&play-end-position=" + Math.floor(this.mediaElement_.currentTime);
+    statStr += "&buffering=" + buffering;
+    statStr += "&content-duration=" + Math.round(this.mediaElement_.duration);
+    statStr += "&play-session=" + this.STAT_launchStartTime;
+    statStr += "&frameloss=0";
+    statStr += "&profileuse=" + profileuse;
+    statStr += "&lgy-timestamp=" + this.getTimeSec();
+    //console.log("GRECO STAT STR:" + statStr);
+    return "&value=" + encodeURIComponent(statStr);
+};
+

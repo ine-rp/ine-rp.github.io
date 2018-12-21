@@ -35,14 +35,24 @@ The overlay layer holds:
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- Change the title tag to your app's name to display as the details text on the Cast device picker -->
-  <title>Casting app name</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="player.css" />
-  <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
-  <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js"></script>
-  <script type="text/javascript" src="player.js"></script>
+	<title>OCS</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="css/player.css" />
+	<link rel="stylesheet" href="css/custom.css" />
+	<link rel="stylesheet" href="css/custom_ocs.css" />
+
+	<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+	<!--<script type="text/javascript" src="//www.gstatic.com/eureka/staging/cast/sdk/libs/mediaplayer/1.0.0/media_player.js"></script>-->
+	<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js"></script>
+
+	<script type="text/javascript" src="js/hsstools.js"></script>
+	<script type="text/javascript" src="js/utils.js"></script>
+	<script type="text/javascript" src="js/main.js"></script>
+	<script type="text/javascript" src="js/flowcontroller.js"></script>
+	<script type="text/javascript" src="js/player.js"></script>
 </head>
+
 <body style="margin: 0">
     <div id="player" class="player">
         <div class="media">
@@ -52,6 +62,11 @@ The overlay layer holds:
         <div class="spinner"></div>
         <div class="watermark"></div>
         <div class="gradient"></div>
+        
+		<div id="Error" class="error" state="off"> 
+            <h1>information</h1>
+            <p>Le nombre maximum de streaming simultanés est atteint. Seuls deux streaming sont possibles en même temps. Un autre appareil vient de déclencher un streaming et couper votre lecture actuelle</p>
+        </div>
         <div class="overlay">
             <div class="media-info">
                 <div class="media-artwork"></div>

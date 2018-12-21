@@ -1,0 +1,23 @@
+/*
+ OCS Specific CSS overrides
+ */
+
+.player[state=idle] {
+  background-image: url("../assets/ocs/ocs_idle.jpg");
+}
+
+.player[state=launching] {
+  background-image: url("../assets/ocs/ocs_launching.jpg");
+}
+
+.player[state="buffering"]{
+  background-image: url("../assets/background.png");
+}
+
+.player .watermark {
+ 	background-image: url("../assets/ocs/ocs_logo.png");
+}
+
+.player .progressBar {
+  background-color: #ff5c01;
+}
