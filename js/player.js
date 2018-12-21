@@ -91,6 +91,12 @@ sampleplayer.CastPlayer = function(element) {
 	cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.NONE);
 	cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.NONE);
   }*/
+    
+      this.debug_ = sampleplayer.DISABLE_DEBUG_;
+  if (this.debug_) {
+    cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
+    cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
+  }
 
   /**
    * The DOM element the player is attached.
@@ -862,6 +868,7 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
    
   //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> loadVideo_ USER ID:", customData['userid']);
   //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> licenseCustomData:" + licenseCustomData);
+    this.log_(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> licenseUrl:" + licenseUrl);
   
   licenseCustomData = "";	// Remove custom data to try
   /*
