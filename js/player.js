@@ -82,7 +82,7 @@ sampleplayer.CastPlayer = function(element) {
    * The debug setting to control receiver, MPL and player logging.
    * @private {boolean}
    */
-	this.debug_ = sampleplayer.DISABLE_DEBUG_; // only for debug at Google level
+/**	this.debug_ = sampleplayer.DISABLE_DEBUG_; // only for debug at Google level
   
   if (this.debug_) {
 	cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
@@ -90,7 +90,7 @@ sampleplayer.CastPlayer = function(element) {
   } else {
 	cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.NONE);
 	cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.NONE);
-  }
+  }*/
 
   /**
    * The DOM element the player is attached.
