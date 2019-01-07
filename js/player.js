@@ -2438,7 +2438,7 @@ sampleplayer.getPath_ = function(url) {
  */
 sampleplayer.CastPlayer.prototype.log_ = function(message) {
   if (this.debug_ && message) {
-    //console.log(message);
+    console.log(message);
   }
 };
 
