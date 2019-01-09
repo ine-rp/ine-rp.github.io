@@ -869,6 +869,7 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
   //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> loadVideo_ USER ID:", customData['userid']);
   //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> licenseCustomData:" + licenseCustomData);
     this.log_(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> licenseUrl:" + licenseUrl);
+    this.log_(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> streamUrl:" + url);
   
   licenseCustomData = "";	// Remove custom data to try
   /*
