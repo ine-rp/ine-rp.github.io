@@ -54,6 +54,7 @@ var ReloadRequested = false;
 var sampleplayer = sampleplayer || {};
 
 
+
 /**
  * <p>
  * Cast player constructor - This does the following:
@@ -75,27 +76,21 @@ var sampleplayer = sampleplayer || {};
  */
 sampleplayer.CastPlayer = function(element) {
 	
-	this.version_ = "1.0.45";
+	this.version_ = "1.0.43";
 	console.log("### PLAYER PROD VERSION :"+this.version_+" ###");
 
   /**
    * The debug setting to control receiver, MPL and player logging.
    * @private {boolean}
    */
-/**	this.debug_ = sampleplayer.DISABLE_DEBUG_; // only for debug at Google level
+	this.debug_ = sampleplayer.DISABLE_DEBUG_; // only for debug at Google level
   
-  if (this.debug_) {
-	cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
-    cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
-  } else {
-	cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.NONE);
-	cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.NONE);
-  }*/
-    
-      this.debug_ = sampleplayer.DISABLE_DEBUG_;
   if (this.debug_) {
     cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
     cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
+  } else {
+	  cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.NONE);
+	  cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.NONE);
   }
 
   /**
@@ -221,7 +216,8 @@ sampleplayer.CastPlayer = function(element) {
    * Protocol Func
    * @private {cast.player.api.Player}
    */
-  this.protocol_ = null; 
+  this.protocol_ = null;
+  
   
   /**
    * Media player used to preload content.
@@ -270,15 +266,20 @@ sampleplayer.CastPlayer = function(element) {
    * The media element.
    * @private {HTMLMediaElement}
    */
-  this.mediaElement_ = /** @type {HTMLMediaElement} */ (this.element_.querySelector('video'));
+  this.mediaElement_ = /** @type {HTMLMediaElement} */
+      (this.element_.querySelector('video'));
   this.mediaElement_.addEventListener('error', this.onError_.bind(this), false);
-  this.mediaElement_.addEventListener('playing', this.onPlaying_.bind(this), false);
+  this.mediaElement_.addEventListener('playing', this.onPlaying_.bind(this),
+      false);
   this.mediaElement_.addEventListener('pause', this.onPause_.bind(this), false);
   this.mediaElement_.addEventListener('ended', this.onEnded_.bind(this), false);
   this.mediaElement_.addEventListener('abort', this.onAbort_.bind(this), false);
-  this.mediaElement_.addEventListener('timeupdate', this.onProgress_.bind(this), false);
-  this.mediaElement_.addEventListener('seeking', this.onSeekStart_.bind(this), false);
-  this.mediaElement_.addEventListener('seeked', this.onSeekEnd_.bind(this), false);
+  this.mediaElement_.addEventListener('timeupdate', this.onProgress_.bind(this),
+      false);
+  this.mediaElement_.addEventListener('seeking', this.onSeekStart_.bind(this),
+      false);
+  this.mediaElement_.addEventListener('seeked', this.onSeekEnd_.bind(this),
+      false);
 
 
   /**
@@ -398,7 +399,6 @@ sampleplayer.TextTrackType = {
  */
 sampleplayer.CaptionsMimeType = {
   TTML: 'application/ttml+xml',
-  TTML2: 'application/mp4',  
   VTT: 'text/vtt'
 };
 
@@ -640,9 +640,13 @@ sampleplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
  * @export
  */
 sampleplayer.CastPlayer.prototype.load = function(info) {
-  this.log_('onLoad_'); 
+  this.log_('onLoad_');
+  
   //console.log(">>>>>>>>>>>>>>>>>>>>>> sampleplayer.CastPlayer.prototype.load");
   //console.dir(info);
+  
+  
+  
   clearTimeout(this.idleTimerId_);
   var self = this;
   
@@ -865,11 +869,10 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
   initFlow(customData['userid'], this.OnFlowControlError.bind(this));
 
   this.preferedLanguage = (customData['prefered_language'] || "vf").toUpperCase();
-   
+  
+  
   //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> loadVideo_ USER ID:", customData['userid']);
   //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> licenseCustomData:" + licenseCustomData);
-    this.log_(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> licenseUrl:" + licenseUrl);
-    this.log_(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> streamUrl:" + url);
   
   licenseCustomData = "";	// Remove custom data to try
   /*
@@ -949,8 +952,9 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
           var streamInfo = protocol.getStreamInfo(i);
           var mimeType = streamInfo.mimeType;
           var track;
-          console.log("*** [Player] onManifestReady STREAM INFO ["+i+"]", streamInfo);
-          if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {           
+          if (mimeType.indexOf(sampleplayer.TrackType.TEXT) === 0 ||
+              mimeType === sampleplayer.CaptionsMimeType.TTML) {
+            
             subtitle = i;
           } else if (mimeType.indexOf(sampleplayer.TrackType.VIDEO) === 0) {
             
@@ -964,7 +968,8 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
           }
         }
         
-        if (self.preferedLanguage != null){			
+        if (self.preferedLanguage != null){
+			
 		  // check if it's the movie has only one audio track ( VF or VOST with incrusted subtitle) to force the preferedLanguage to VF
 		  if ((audioFrench==null || audioOther==null) && subtitle==null)
 			self.preferedLanguage = "VF"; 
@@ -1269,9 +1274,7 @@ sampleplayer.CastPlayer.prototype.processInBandTracks_ =
         break;
       }
     }
-	
-    var streamInfo = protocol.getStreamInfo(i);
-    var isText = (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2)?true:false;
+    var isText = protocol.getStreamInfo(i).mimeType.indexOf('text') === 0;
     var wasActive = protocol.isStreamEnabled(i);
     if (isActive && !wasActive) {
       protocol.enableStream(i, true);
@@ -1309,8 +1312,10 @@ sampleplayer.CastPlayer.prototype.readInBandTracksInfo_ = function() {
     var streamInfo = protocol.getStreamInfo(i);
     var mimeType = streamInfo.mimeType;
     var track;
-    if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {
-      track = new cast.receiver.media.Track(trackId, cast.receiver.media.TrackType.TEXT);
+    if (mimeType.indexOf(sampleplayer.TrackType.TEXT) === 0 ||
+        mimeType === sampleplayer.CaptionsMimeType.TTML) {
+      track = new cast.receiver.media.Track(
+          trackId, cast.receiver.media.TrackType.TEXT);
       subtitle = i;
     } else if (mimeType.indexOf(sampleplayer.TrackType.VIDEO) === 0) {
       track = new cast.receiver.media.Track(
@@ -1475,6 +1480,9 @@ sampleplayer.CastPlayer.prototype.setState_ = function(state, opt_crossfade, opt
       self.element_.setAttribute('state', state);
       self.updateApplicationState_();
       self.setIdleTimeout_(sampleplayer.IDLE_TIMEOUT[state.toUpperCase()]);
+      
+      
+      
     } else {
       var stateTransitionTime = self.lastStateTransitionTime_;
       sampleplayer.transition_(self.element_, sampleplayer.TRANSITION_DURATION_,
@@ -1505,6 +1513,8 @@ sampleplayer.CastPlayer.prototype.updateApplicationState_ = function() {
     var idle = this.state_ === sampleplayer.State.IDLE;
     var media = idle ? null : this.mediaManager_.getMediaInformation();
     var applicationState = sampleplayer.getApplicationState_(media);
+    
+    
     
     //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> [updateApplicationState_] applicationState:"+applicationState+" currentApplicationState_:"+this.currentApplicationState_);
     
@@ -2438,9 +2448,8 @@ sampleplayer.getPath_ = function(url) {
  * @private
  */
 sampleplayer.CastPlayer.prototype.log_ = function(message) {
-  //if (this.debug_ && message) {
-  if (message) {
-    console.log(message);
+  if (this.debug_ && message) {
+    //console.log(message);
   }
 };
 
@@ -2495,8 +2504,10 @@ sampleplayer.isCastForAudioDevice_ = function() {
 };
 
 
+
+
 sampleplayer.CastPlayer.prototype.selectTrackByIndex = function(audioIdx, subIdx) {
-  //console.log("[Castplayer] selectTrackByIndex with params > audioIdx:" + audioIdx +  " subIdx:" + subIdx);
+  console.log("[Castplayer] selectTrackByIndex with params > audioIdx:" + audioIdx +  " subIdx:" + subIdx);
 };
 
 sampleplayer.CastPlayer.prototype.selectTrack = function(audioIdx, subIdx, license_url, custom_data) {
@@ -2504,8 +2515,10 @@ sampleplayer.CastPlayer.prototype.selectTrack = function(audioIdx, subIdx, licen
     //console.log("no player to set tracks, or not ready yet");
     return;
   }
+  //console.log("*** [Player] selectTrack with params > audio:" + audioIdx +  " sub:" + subIdx+" StreamCount:"+this.protocol_.getStreamCount());
 	
-	var streamCount = this.protocol_.getStreamCount();	
+	var streamCount = this.protocol_.getStreamCount();
+	
 	var tracks = [];
 	var currentAudio = null;
 	var currentSub = null;
@@ -2514,38 +2527,43 @@ sampleplayer.CastPlayer.prototype.selectTrack = function(audioIdx, subIdx, licen
 
 	for (var i = 0; i < streamCount; i++) {
 		var streamInfo = this.protocol_.getStreamInfo(i);
-		//console.log("*** [Player] selectTrack STREAM INFO ["+i+"]", streamInfo);
-		var streamIdx = i;
+    
+    //console.log("*** [Player] selectTrack STREAM INFO ["+i+"]", streamInfo);
+
+    var streamIdx = i;
+
 		if (streamInfo.mimeType.indexOf('audio') === 0){
 			if(this.protocol_.isStreamEnabled(streamIdx))
 				currentAudio = streamIdx;
 			if(audioIdx == streamIdx){
-				//console.log("*** [Player] selectTrack  / Will Select AUDIO :" + streamInfo.mimeType+" i:"+i+" audio:"+audioIdx, streamInfo);
+        //console.log("*** [Player] selectTrack  / Will Select AUDIO :" + streamInfo.mimeType+" i:"+i+" audio:"+audioIdx, streamInfo);
 				nextAudio = streamIdx;
-			}
-		} else if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {
+      }
+		} else if (streamInfo.mimeType.indexOf('text') === 0) {
 			if(this.protocol_.isStreamEnabled(streamIdx))
 				currentSub = streamIdx;
 			if(subIdx == streamIdx){
-				//console.log("*** [Player] selectTrack  / Will Select SUB : " + streamInfo.mimeType+" i:"+i+" sub:"+subIdx, streamInfo);
+        //console.log("*** [Player] selectTrack  / Will Select SUB : " + streamInfo.mimeType+" i:"+i+" sub:"+subIdx, streamInfo);
 				nextSub = streamIdx;
-			}
+      }
 		}
 	}
 
-	// SUBS
-	if(currentSub != null){ // Disable current sub track
+  // SUBS
+  if(currentSub != null){ // Disable current sub track
 		this.protocol_.enableStream(currentSub, false); 
 	}
 
 	if(nextSub != null){
-		//console.log("*** [Player] selectTrack SELECT SUB IDX: ", nextSub);
+    //console.log("*** [Player] selectTrack SELECT SUB IDX: ", nextSub);
 		this.protocol_.enableStream(nextSub, true);
 		this.player_.enableCaptions(true);
 	} else {
 		this.player_.enableCaptions(false);
 	}
-
+	
+  
+	
 	// AUDIO
 	if(currentAudio != null){  // Disable current audio track
 		this.protocol_.enableStream(currentAudio, false);
@@ -2557,7 +2575,7 @@ sampleplayer.CastPlayer.prototype.selectTrack = function(audioIdx, subIdx, licen
 	}
 	
 
-	//console.log("*** [Player] selectTrack END WIDTH : AUDIO current:" + currentAudio+" next:"+nextAudio+" /// SUBS current:" + currentSub+" next:"+nextSub);
+  //console.log("*** [Player] selectTrack END WIDTH : AUDIO current:" + currentAudio+" next:"+nextAudio+" /// SUBS current:" + currentSub+" next:"+nextSub);
 
 	this.setState_(sampleplayer.State.BUFFERING, false);
 	this.mediaElement_.pause();
@@ -2569,7 +2587,7 @@ sampleplayer.CastPlayer.prototype.selectTrack = function(audioIdx, subIdx, licen
 	
 	var selfPlayer = this.player_;
   
-	setTimeout(function(){
+  setTimeout(function(){
     selfPlayer.reload();
   }, 500);
 
@@ -2580,7 +2598,7 @@ sampleplayer.CastPlayer.prototype.selectTrackByLang = function(audioLang, subLan
   if (!this.player_ || this.protocol_.getStreamCount() == 0) {
     return;
   }
-  //console.log("[Player] selectTrackByLang with params > audio:" + audioLang +  " sub:" + subLang+" StreamCount:"+this.protocol_.getStreamCount());
+  console.log("[Player] selectTrackByLang with params > audio:" + audioLang +  " sub:" + subLang+" StreamCount:"+this.protocol_.getStreamCount());
   
   var streamCount = this.protocol_.getStreamCount();
   
@@ -2591,21 +2609,22 @@ sampleplayer.CastPlayer.prototype.selectTrackByLang = function(audioLang, subLan
   var nextSub = null;
 
   for (var i = 0; i < streamCount; i++) {
-    var streamInfo = this.protocol_.getStreamInfo(i);   
+    var streamInfo = this.protocol_.getStreamInfo(i);
+    
     //console.log("STREAM INFO ["+i+"]", streamInfo);
 
     if (streamInfo.mimeType.indexOf('audio') === 0){
       if(this.protocol_.isStreamEnabled(i))
         currentAudio = i;
       if(streamInfo.language.substring(0,2) == audioLang){
-        //console.log("[Player] selectTrack / Will Select AUDIO :" + streamInfo.mimeType+" i:"+i+" audio:"+streamInfo.language, streamInfo);
+        console.log("[Player] selectTrack / Will Select AUDIO :" + streamInfo.mimeType+" i:"+i+" audio:"+streamInfo.language, streamInfo);
         nextAudio = i;
       }
-    } else if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {
+    } else if (streamInfo.mimeType.indexOf('text') === 0) {
       if(this.protocol_.isStreamEnabled(i))
         currentSub = i;
       if(subLang != ""){
-        //console.log("[Player] selectTrack / Will Select SUB : " + streamInfo.mimeType+" i:"+i+" sub:"+streamInfo.language, streamInfo);
+        console.log("[Player] selectTrack / Will Select SUB : " + streamInfo.mimeType+" i:"+i+" sub:"+streamInfo.language, streamInfo);
         nextSub = i;
       }
     }
@@ -2636,7 +2655,8 @@ sampleplayer.CastPlayer.prototype.selectTrackByLang = function(audioLang, subLan
     this.protocol_.enableStream(nextAudio, true);
   }
   
-  //console.log("[Player] selectTrackByLang END WIDTH : AUDIO current:" + currentAudio+" next:"+nextAudio+" /// SUBS current:" + currentSub+" next:"+nextSub);
+
+  console.log("[Player] selectTrackByLang END WIDTH : AUDIO current:" + currentAudio+" next:"+nextAudio+" /// SUBS current:" + currentSub+" next:"+nextSub);
 
   this.setState_(sampleplayer.State.BUFFERING, false);
   this.mediaElement_.pause();
@@ -2655,34 +2675,36 @@ sampleplayer.CastPlayer.prototype.getTracks = function() {
 	} else {
 		//console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ getTracks IN PLAYING STATE');
 		//console.dir("PROTOCOL:", this.protocol_);
-		var current;		
-		var streamCount = this.protocol_.getStreamCount();		
-		var tracks = [];
+		var current;
 		
+		var streamCount = this.protocol_.getStreamCount();
+		
+		var tracks = [];
 		for (var i = 0; i < streamCount; i++) {
 			var streamInfo = this.protocol_.getStreamInfo(i);
 			if (streamInfo.mimeType.indexOf('audio') === 0) {
-				var track = {};
-				track.index = i;
-				track.mimeType = "audio/mp4";
-				track.selected = this.protocol_.isStreamEnabled(i);
-				track.language = streamInfo.language ? streamInfo.language : "und";
-				tracks.push(track);					
-				//console.log('track ' + i + ' of type ' + track.mimeType + ' language  ' + track.language + ' is selected ? ' + track.selected);
-			} else if (streamInfo.mimeType.indexOf('text') === 0 || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML || streamInfo.mimeType === sampleplayer.CaptionsMimeType.TTML2) {
-				var track = {};
-				track.index = i;
-				track.mimeType = "text/mp4";
-				track.selected = this.protocol_.isStreamEnabled(i);
-				track.language = streamInfo.language ? streamInfo.language : "und";
-				tracks.push(track);					
-				//console.log('track ' + i + ' of type ' + track.mimeType + ' language  ' + track.language + ' is selected ? ' + track.selected);
+					var track = {};
+					track.index = i;
+					track.mimeType = "audio/mp4";
+					track.selected = this.protocol_.isStreamEnabled(i);
+					track.language = streamInfo.language ? streamInfo.language : "und";
+					tracks.push(track);
+					
+					//console.log('track ' + i + ' of type ' + track.mimeType + ' language  ' + track.language + ' is selected ? ' + track.selected);
+			} else if (streamInfo.mimeType.indexOf('text') === 0) {
+					var track = {};
+					track.index = i;
+					track.mimeType = "text/mp4";
+					track.selected = this.protocol_.isStreamEnabled(i);
+					track.language = streamInfo.language ? streamInfo.language : "und";
+					tracks.push(track);
+					
+					//console.log('track ' + i + ' of type ' + track.mimeType + ' language  ' + track.language + ' is selected ? ' + track.selected);
 			}
     }
 		return tracks;
 	}
 };
-
 sampleplayer.CastPlayer.prototype.getTimeSec = function(){
 	return Math.round(new Date().getTime()/1000);
 };
@@ -2765,4 +2787,3 @@ sampleplayer.CastPlayer.prototype.formatGrecoStat = function(){
     //console.log("GRECO STAT STR:" + statStr);
     return "&value=" + encodeURIComponent(statStr);
 };
-
