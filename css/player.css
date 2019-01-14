@@ -17,7 +17,10 @@
 /* NOTE: this must be first statement in file to work on device */
 @import url(https://fonts.googleapis.com/css?family=Open+Sans:300,400);
 
-
+@font-face {
+  font-family: 'Arial';
+  src: url('arial.ttf')  format('truetype'); /* Safari, Android, iOS */
+}
 
 /* ------------------------------------------------- */
 /* Animations                                        */
