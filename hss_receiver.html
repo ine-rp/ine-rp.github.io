@@ -1,0 +1,60 @@
+<html>
+    <head>
+        <title>OCS</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="css/custom.css" />
+        <script type="text/javascript" src="js/flow-controller.js"></script>
+        <script type="text/javascript" src="js/bookmark.js"></script>
+        <script type="text/javascript" src="js/player-caf.js"></script>
+        <!-- http://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js -->
+        <!-- <script type="text/javascript" src="js/cast_receiver_framework.js"></script>  -->
+		<script type="text/javascript" src="http://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    </head>
+    <body>
+        <div id="Error" class="error" state="off">
+            <h1>information</h1>
+            <p>Le nombre maximum de streaming simultanés est atteint. Seuls deux streaming sont possibles en même temps. Un autre appareil vient de déclencher un streaming et couper votre lecture actuelle</p>
+        </div>
+        <cast-media-player id="player"></cast-media-player>
+        <script>
+            const context = cast.framework.CastReceiverContext.getInstance();
+            const player = new caf.Player(context);
+            let options = new cast.framework.CastReceiverOptions();
+            // options.useLegacyDashSupport = true;
+            context.start(options);
+        </script>
+        <script>
+            //host is the element that holds the shadow root:
+            var style = document.createElement('style')
+            var host = document.getElementById('player');
+            style.innerHTML = `
+                .mediaElement::cue {
+                    font-family: Arial;
+                    font-size: 1em;
+                    background:transparent !important;
+                    text-shadow: 2px 2px 2px black;
+                }
+                .player[contenttype="video"] .metadataPlaceHolder {
+                    padding-right: 110px;
+                }
+                .player[contenttype="video"] #castControlsSeekablePlayed {
+                    visibility: hidden !important;
+                }
+                .player[contenttype="video"] #castControlsSeekable {
+                    visibility: hidden !important;
+                }
+                .player[islive="true"]:not([state="loading"]) #castControlsProgress {
+                    background-color: transparent;
+                }
+                .player[islive="true"] #castControlsCurTime {
+                    visibility: hidden !important;
+                }
+                .player[islive="true"] #castControlsTotalTime {
+                    visibility: hidden !important;
+                }
+            `
+            host.shadowRoot.appendChild(style);
+        </script>
+    </body>
+</html>
