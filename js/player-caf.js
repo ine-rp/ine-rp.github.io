@@ -93,11 +93,11 @@ class Player {
                 this.GRECO_STAT.romid = customData['romid'] || '';
                 this.GRECO_STAT.devicea = customData['devicea'] || '';
 
-                const flowController = new caf.FlowController(this.context);
+                /*const flowController = new caf.FlowController(this.context);
                 // trigger error
                 flowController.initFlow(customData.userid, (error) => {
                     this.onFlowControlError(error);
-                });
+                });*/
 
                 return loadRequestData;
         });
