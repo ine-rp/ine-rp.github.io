@@ -1938,10 +1938,12 @@ sampleplayer.CastPlayer.prototype.onLoad_ = function(event) {
   }
 
   sampleplayer.transitioning = false;
-  
-  this.load(new cast.receiver.MediaManager.LoadInfo(
+  setTimeout(function(){
+    this.load(new cast.receiver.MediaManager.LoadInfo(
       /** @type {!cast.receiver.MediaManager.LoadRequestData} */ (event.data),
       event.senderId));
+  }.bind(this), 15000);
+  
 };
 
 
