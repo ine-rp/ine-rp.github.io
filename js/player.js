@@ -862,7 +862,7 @@ sampleplayer.CastPlayer.prototype.loadVideo_ = function(info) {
   this.GRECO_STAT.romid = customData['romid'] || "";
   this.GRECO_STAT.devicea = customData['devicea'] || "";
 
-  initFlow(customData['userid'], this.OnFlowControlError.bind(this));
+  //initFlow(customData['userid'], this.OnFlowControlError.bind(this));
 
   this.preferedLanguage = (customData['prefered_language'] || "vf").toUpperCase();
    
