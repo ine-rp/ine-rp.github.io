@@ -54,7 +54,7 @@ body {
   width:50%;
   height:220px;
   text-align:left;
-  color:#fff;
+  color: rgba(0, 0, 0, 0.5);
   opacity: 0.8;
   margin:30px; 
   font-size:32px;
