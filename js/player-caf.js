@@ -58,17 +58,13 @@ class Player {
             const customData = loadRequest.media.customData;
             const licenseUrl = customData['hss_license_url'] || null;
             const watermarkText = customData['hss_watermark_text'] || null;
+            document.getElementById('WatermarkHss').innerHTML = watermarkText;
             // const licenseCustomData = customData['hss_license_custom_data'] || null;
             pc.licenseUrl = licenseUrl;
             // pc.licenseCustomData = licenseCustomData;
             pc.protectionSystem = cast.framework.ContentProtection.WIDEVINE;
-            setWatermarkText(watermarkText);
             return pc;
         });
-    }
-    
-    setWatermarkText(watermarkText) {
-        document.getElementById('WatermarkHss').innerHTML = watermarkText;
     }
 
     setMessageInterceptors() {
