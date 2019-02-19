@@ -59,6 +59,7 @@ class Player {
             const licenseUrl = customData['hss_license_url'] || null;
             const watermarkText = customData['hss_watermark_text'] || null;
             document.getElementById('WatermarkHss').innerHTML = watermarkText;
+            this.log_('WATERMARK: ' + watermarkText);
             // const licenseCustomData = customData['hss_license_custom_data'] || null;
             pc.licenseUrl = licenseUrl;
             // pc.licenseCustomData = licenseCustomData;
