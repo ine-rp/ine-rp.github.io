@@ -49,12 +49,12 @@ body {
   display:block;
   position:absolute;
   top:55%;
-  left:25%;
+  left:50%;
   z-index:500;
   width:50%;
   height:220px;
-  text-align:left;
-  color:#FFF;
+  text-align:center;
+  color:#D3D3D3;
   margin:30px; 
-  font-size:24px;
+  font-size:32px;
 }

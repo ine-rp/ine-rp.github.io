@@ -56,11 +56,9 @@ class Player {
         // Update playback config licenseUrl according to provided value in load request.
         this.playerManager.setMediaPlaybackInfoHandler((loadRequest, pc) => {
             const customData = loadRequest.media.customData;
-            this.log_('WATERMARK 2: ' + customData.hss_watermark_text);
             const licenseUrl = customData['hss_license_url'] || null;
             const watermarkText = customData['hss_watermark_text'] || null;
             document.getElementById('WatermarkHss').innerHTML = watermarkText;
-            this.log_('WATERMARK: ' + watermarkText);
             // const licenseCustomData = customData['hss_license_custom_data'] || null;
             pc.licenseUrl = licenseUrl;
             // pc.licenseCustomData = licenseCustomData;
