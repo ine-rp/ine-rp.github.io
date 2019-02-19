@@ -42,3 +42,18 @@ body {
 }
 #Error[state="on"] h1 {margin:30px; font-size:24px;}
 #Error[state="on"] p {margin:30px; font-size:16px;}
+
+
+
+#WatermarkHss {
+  display:block;
+  position:absolute;
+  top:55%;
+  left:25%;
+  z-index:500;
+  width:50%;
+  height:220px;
+  text-align:left;
+  color:#FFF;
+}
+#WatermarkHss p {margin:30px; font-size:24px;}
