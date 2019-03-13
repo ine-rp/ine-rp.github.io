@@ -64,7 +64,7 @@ class Player {
                 if (watermarkOpacity == 0) {
                     extraOpacity = 0;
                 } else {
-                    extraOpacity = (parseFloat(watermarkOpacity) + 0.2).toFixed(1);
+                    extraOpacity = (parseFloat(watermarkOpacity) + 0.3).toFixed(1);
                 }
                 if (extraOpacity > 1) {
                     extraOpacity = 1;
