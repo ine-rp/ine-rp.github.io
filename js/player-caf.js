@@ -59,6 +59,10 @@ class Player {
             const licenseUrl = customData['hss_license_url'] || null;
             const watermarkText = customData['hss_watermark_text'] || null;
             const watermarkOpacity = customData['hss_watermark_opacity'] || null;
+            var extraOpacity = (parseFloat(watermarkOpacity) + 0.2).toFixed(1);
+            if (extraOpacity > 1) {
+                extraOpacity = 1;
+            }
             document.getElementById('WatermarkHss').innerHTML = watermarkText;
             document.getElementById('WatermarkHss').style.opacity = watermarkOpacity;
             // const licenseCustomData = customData['hss_license_custom_data'] || null;
