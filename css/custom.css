@@ -49,13 +49,12 @@ body {
   display:block;
   position:absolute;
   top:55%;
-  left:35%;
   z-index:500;
   width:50%;
   height:220px;
   text-align:left;
   color:#fff;
   opacity: 0.2;
-  margin:30px; 
+  margin: 0 auto; 
   font-size:32px;
 }
