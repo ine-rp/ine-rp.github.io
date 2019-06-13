@@ -63,9 +63,9 @@ class Player {
             const screeners_auth_token = customData['screeners_auth_token'] || null;
             const screeners_auth_key = customData['screeners_auth_key'] || null;
             
-            this.log_("setplaybackinfo "+this.base_url);
-            this.log_("setplaybackinfo "+this.screeners_auth_token);
-            this.log_("setplaybackinfo "+this.screeners_auth_key);
+            this.log_("setplaybackinfo "+base_url);
+            this.log_("setplaybackinfo "+screeners_auth_token);
+            this.log_("setplaybackinfo "+screeners_auth_key);
             
             if (watermarkOpacity != null) {
                 var extraOpacity = 0;
@@ -80,7 +80,7 @@ class Player {
                 document.getElementById('WatermarkHss').style.opacity = extraOpacity;
             }
             document.getElementById('WatermarkHss').innerHTML = watermarkText;
-            this.callSessionValid(this.base_url, this.screeners_auth_token, this.screeners_auth_key);
+            this.callSessionValid(base_url, screeners_auth_token, screeners_auth_key);
             // const licenseCustomData = customData['hss_license_custom_data'] || null;
             pc.licenseUrl = licenseUrl;
             // pc.licenseCustomData = licenseCustomData;
