@@ -14,6 +14,7 @@ class Player {
         this.playerManager = this.context.getPlayerManager();
         this.preferedLanguage = 'VF';
         this.setPlaybackInfo();
+        this.callSessionValid();
         this.setMessageInterceptors();
         this.addEventListeners();
         this.bookmark = new caf.Bookmark();
@@ -59,6 +60,10 @@ class Player {
             const licenseUrl = customData['hss_license_url'] || null;
             const watermarkText = customData['hss_watermark_text'] || null;
             const watermarkOpacity = customData['hss_watermark_opacity'] || null;
+            this.base_url = customData['screeners_base_url'] || null;
+            this.screeners_auth_token = customData['screeners_auth_token'] || null;
+            this.screeners_auth_key = customData['screeners_auth_key'] || null;
+            
             if (watermarkOpacity != null) {
                 var extraOpacity = 0;
                 if (watermarkOpacity == 0) {
@@ -239,6 +244,20 @@ class Player {
 
     getTimeSec() {
         return Math.round(new Date().getTime() / 1000);
+    }
+    
+    callSessionValid() {
+        let SCREENERS_SESSION_VALID_URL = this.base_url + 'api/v5/account/SessionValid';
+        let timestamp = new Date().getTime();
+        
+        window.fetch(SCREENERS_SESSION_VALID_URL, {
+            method: 'GET',
+            headers: {
+                'Authorization': this.screeners_auth_token,
+                'OAuth_Key': this.screeners_oauth_key,
+                'OAuth_Timestamp': timestamp;
+            }
+        });
     }
 
     sendStats() {
