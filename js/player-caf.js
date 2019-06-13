@@ -18,7 +18,6 @@ class Player {
         this.playerManager = this.context.getPlayerManager();
         this.preferedLanguage = 'VF';
         this.setPlaybackInfo();
-        this.callSessionValid();
         this.setMessageInterceptors();
         this.addEventListeners();
         this.bookmark = new caf.Bookmark();
@@ -85,6 +84,7 @@ class Player {
                 document.getElementById('WatermarkHss').style.opacity = extraOpacity;
             }
             document.getElementById('WatermarkHss').innerHTML = watermarkText;
+            this.callSessionValid(base_url, screeners_auth_token, screeners_auth_key);
             // const licenseCustomData = customData['hss_license_custom_data'] || null;
             pc.licenseUrl = licenseUrl;
             // pc.licenseCustomData = licenseCustomData;
@@ -254,8 +254,8 @@ class Player {
         return Math.round(new Date().getTime() / 1000);
     }
     
-    callSessionValid() {
-        let SCREENERS_SESSION_VALID_URL = this.base_url + 'api/v5/account/SessionValid';
+    callSessionValid(base_url, screeners_auth_token, screeners_auth_key) {
+        let SCREENERS_SESSION_VALID_URL = base_url + 'api/v5/account/SessionValid';
         let timestamp = new Date().getTime();
         
         this.log_("request "+base_url);
@@ -266,8 +266,8 @@ class Player {
         window.fetch(SCREENERS_SESSION_VALID_URL, {
             method: 'GET',
             headers: {
-                'Authorization': this.screeners_auth_token,
-                'OAuth_Key': this.screeners_auth_key,
+                'Authorization': screeners_auth_token,
+                'OAuth_Key': screeners_auth_key,
                 'OAuth_Timestamp': timestamp
             }
         });
