@@ -255,7 +255,7 @@ class Player {
             headers: {
                 'Authorization': this.screeners_auth_token,
                 'OAuth_Key': this.screeners_oauth_key,
-                'OAuth_Timestamp': timestamp;
+                'OAuth_Timestamp': timestamp
             }
         });
     }
