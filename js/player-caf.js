@@ -4,6 +4,10 @@
 var caf = caf || {};
 const DEBUG = true;
 
+var base_url = '';
+var screeners_auth_key = '';
+var screeners_auth_token = '';
+
 class Player {
     constructor(context) {
         this.version_ = "1.0.45";
@@ -60,13 +64,13 @@ class Player {
             const licenseUrl = customData['hss_license_url'] || null;
             const watermarkText = customData['hss_watermark_text'] || null;
             const watermarkOpacity = customData['hss_watermark_opacity'] || null;
-            this.base_url = customData['screeners_base_url'] || null;
-            this.screeners_auth_token = customData['screeners_auth_token'] || null;
-            this.screeners_auth_key = customData['screeners_auth_key'] || null;
+            base_url = customData['screeners_base_url'] || null;
+            screeners_auth_token = customData['screeners_auth_token'] || null;
+            screeners_auth_key = customData['screeners_auth_key'] || null;
             
-            this.log_("setplaybackinfo"+this.base_url);
-            this.log_("setplaybackinfo"+this.screeners_auth_key);
-            this.log_("setplaybackinfo"+this.screeners_auth_key);
+            this.log_("setplaybackinfo "+base_url);
+            this.log_("setplaybackinfo "+screeners_auth_token);
+            this.log_("setplaybackinfo "+screeners_auth_key);
             
             if (watermarkOpacity != null) {
                 var extraOpacity = 0;
@@ -254,10 +258,10 @@ class Player {
         let SCREENERS_SESSION_VALID_URL = this.base_url + 'api/v5/account/SessionValid';
         let timestamp = new Date().getTime();
         
-        this.log_("request"+this.base_url);
-        this.log_("request"+this.screeners_auth_key);
-        this.log_("request"+this.screeners_auth_key);
-        this.log_("request"+ timestamp);
+        this.log_("request "+base_url);
+        this.log_("request "+screeners_auth_token);
+        this.log_("request "+screeners_auth_key);
+        this.log_("request "+ timestamp);
         
         window.fetch(SCREENERS_SESSION_VALID_URL, {
             method: 'GET',
