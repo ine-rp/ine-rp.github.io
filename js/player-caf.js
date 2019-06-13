@@ -216,6 +216,7 @@ class Player {
                 this.media.customData.ocscontentid,
                 obj.currentMediaTime,
                 this.mediaDuration
+                document.getElementById('WatermarkHss').style.visibility = "hidden";
             );
             if (obj.endedReason === 'STOPPED') {
                 this.log_('STOPPED');
