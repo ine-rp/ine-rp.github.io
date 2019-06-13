@@ -180,6 +180,7 @@ class Player {
         });
 
         this.playerManager.addEventListener(cast.framework.events.EventType.LOADED_METADATA, () => {
+            document.getElementById('WatermarkHss').style.visibility = "visible";
             this.OCS_STAT.lastevent = {
                 value: 'loaded',
                 date: this.getTimeSec(),
