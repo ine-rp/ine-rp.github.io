@@ -14,7 +14,7 @@ class Player {
         this.playerManager = this.context.getPlayerManager();
         this.preferedLanguage = 'VF';
         this.setPlaybackInfo();
-        this.callSessionValid();
+        //this.callSessionValid();
         this.setMessageInterceptors();
         this.addEventListeners();
         this.bookmark = new caf.Bookmark();
