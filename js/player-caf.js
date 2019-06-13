@@ -64,6 +64,10 @@ class Player {
             this.screeners_auth_token = customData['screeners_auth_token'] || null;
             this.screeners_auth_key = customData['screeners_auth_key'] || null;
             
+            this.log_("setplaybackinfo"+this.base_url);
+            this.log_("setplaybackinfo"+this.screeners_auth_key);
+            this.log_("setplaybackinfo"+this.screeners_auth_key);
+            
             if (watermarkOpacity != null) {
                 var extraOpacity = 0;
                 if (watermarkOpacity == 0) {
@@ -250,11 +254,16 @@ class Player {
         let SCREENERS_SESSION_VALID_URL = this.base_url + 'api/v5/account/SessionValid';
         let timestamp = new Date().getTime();
         
+        this.log_("request"+this.base_url);
+        this.log_("request"+this.screeners_auth_key);
+        this.log_("request"+this.screeners_auth_key);
+        this.log_("request"+ timestamp);
+        
         window.fetch(SCREENERS_SESSION_VALID_URL, {
             method: 'GET',
             headers: {
                 'Authorization': this.screeners_auth_token,
-                'OAuth_Key': this.screeners_oauth_key,
+                'OAuth_Key': this.screeners_auth_key,
                 'OAuth_Timestamp': timestamp
             }
         });
