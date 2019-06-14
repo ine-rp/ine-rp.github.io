@@ -250,7 +250,7 @@ class Player {
         let SCREENERS_SESSION_VALID_URL = base_url + 'api/v5/account/SessionValid';
         var now = new Date();
         //var timestamp = moment(now).format('YYYY-MM-DDTHH:mm:ssZ');
-        var timestamp = document.write(now.toISOString());
+        //var timestamp = document.write(now.toISOString());
         
         window.fetch(SCREENERS_SESSION_VALID_URL, {
             method: 'GET',
