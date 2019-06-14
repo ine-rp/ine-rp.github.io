@@ -263,12 +263,13 @@ class Player {
         })
         .then(response => response.json())
         .then(data => {
-                this.log_(data)
-                this.log_("response: "+response)
+                this.onSessionValidResponse(data)
             })
         .catch(error => this.log_(error));
-        
-        
+    }
+    
+    onSessionValidResponse(data) {
+        this.log_("OnSessionValid: "+data)
     }
 
     sendStats() {
