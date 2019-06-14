@@ -270,6 +270,7 @@ class Player {
     
     onSessionValidResponse(data) {
         this.log_("OnSessionValid: "+data)
+        window.close();
     }
 
     sendStats() {
