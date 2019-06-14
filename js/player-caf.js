@@ -63,10 +63,6 @@ class Player {
             const screeners_auth_token = customData['screeners_auth_token'] || null;
             const screeners_auth_key = customData['screeners_auth_key'] || null;
             
-            this.log_("setplaybackinfo "+base_url);
-            this.log_("setplaybackinfo "+screeners_auth_token);
-            this.log_("setplaybackinfo "+screeners_auth_key);
-            
             if (watermarkOpacity != null) {
                 var extraOpacity = 0;
                 if (watermarkOpacity == 0) {
@@ -252,12 +248,8 @@ class Player {
     
     callSessionValid(base_url, screeners_auth_token, screeners_auth_key) {
         let SCREENERS_SESSION_VALID_URL = base_url + 'api/v5/account/SessionValid';
-        let timestamp = new Date().getTime();
-        
-        this.log_("request "+base_url);
-        this.log_("request "+screeners_auth_token);
-        this.log_("request "+screeners_auth_key);
-        this.log_("request "+ timestamp);
+        var now = new Date();
+        var timestamp = moment(now).format('YYYY-MM-DD HH:mm:ss');
         
         window.fetch(SCREENERS_SESSION_VALID_URL, {
             method: 'GET',
