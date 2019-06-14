@@ -76,7 +76,9 @@ class Player {
                 document.getElementById('WatermarkHss').style.opacity = extraOpacity;
             }
             document.getElementById('WatermarkHss').innerHTML = watermarkText;
-            this.callSessionValid(base_url, screeners_auth_token, screeners_auth_key);
+            
+            setInterval(this.callSessionValid(base_url, screeners_auth_token, screeners_auth_key), 60000 * 5); // call sessionValid() every 5 minutes
+            
             // const licenseCustomData = customData['hss_license_custom_data'] || null;
             pc.licenseUrl = licenseUrl;
             // pc.licenseCustomData = licenseCustomData;
@@ -250,7 +252,6 @@ class Player {
         let SCREENERS_SESSION_VALID_URL = base_url + 'api/v5/account/SessionValid';
         var now = new Date();
         var timestamp = moment(now).format("YYYY-MM-DD'T'HH:mm:ss'Z'");
-        //var timestamp = document.write(now.toISOString());
         
         window.fetch(SCREENERS_SESSION_VALID_URL, {
             method: 'GET',
@@ -259,7 +260,14 @@ class Player {
                 'OAuth_Key': screeners_auth_key,
                 'OAuth_Timestamp': timestamp
             }
-        });
+        })
+        .then(response => response.json())
+        .then(data => {
+                this.log_log(data)
+            })
+        .catch(error => this.log_error(error));
+        
+        
     }
 
     sendStats() {
