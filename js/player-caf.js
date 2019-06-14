@@ -263,9 +263,9 @@ class Player {
         })
         .then(response => response.json())
         .then(data => {
-                this.log_log(data)
+                this.log_.(data)
             })
-        .catch(error => this.log_error(error));
+        .catch(error => this.log_(error));
         
         
     }
