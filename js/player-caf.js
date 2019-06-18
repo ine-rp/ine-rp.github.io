@@ -147,7 +147,7 @@ class Player {
                     lastposition: Math.round(currentTime),
                     count: cptErrors
                 };
-                this.sendStats();
+                //this.sendStats();
             });
 
         this.playerManager.addEventListener(cast.framework.events.EventType.BUFFERING,
@@ -207,7 +207,7 @@ class Player {
                 date: this.getTimeSec(),
                 position: Math.round(currentTime)
             };
-            this.sendStats();
+            //this.sendStats();
             this.bookmark.save(
                 this.media.customData.userid,
                 this.media.customData.ocscontentid,
@@ -231,7 +231,7 @@ class Player {
                     date: this.getTimeSec(),
                     position: Math.round(obj.currentMediaTime)
                 };
-                this.sendStats();
+                //this.sendStats();
             } else {
                 this.log_('ENDED');
                 this.OCS_STAT.lastevent = {
@@ -239,7 +239,7 @@ class Player {
                     date: this.getTimeSec(),
                     position: Math.round(obj.currentMediaTime)
                 };
-                this.sendStats();
+                //this.sendStats();
             }
         });
     }
