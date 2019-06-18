@@ -263,7 +263,7 @@ class Player {
         })
         .then(response => response.json())
         .then(data => {
-                this.log_("response json": response.json());
+                this.log_("response json": response.json())
                 this.onSessionValidResponse(data)
             })
         .catch(error => this.log_(error));
