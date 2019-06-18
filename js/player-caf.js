@@ -263,13 +263,15 @@ class Player {
         })
         .then(response => response.json())
         .then(data => {
+                this.log_("response json": response.json());
                 this.onSessionValidResponse(data)
             })
         .catch(error => this.log_(error));
     }
     
     onSessionValidResponse(data) {
-        this.log_("OnSessionValid: "+data)
+        this.log_("OnSessionValid: "+data);
+        this.log_("data json": data.json());
         // if session is invalid close receiver, else no hacer nada
         //window.close();
     }
