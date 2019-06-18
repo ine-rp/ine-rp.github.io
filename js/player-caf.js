@@ -270,7 +270,7 @@ class Player {
     
     onSessionValidResponse(data) {
         this.log_("OnSessionValid: "+data);
-        this.log_(data.Result.isValid);
+        this.log_(data.Result.IsValid);
         // if session is invalid close receiver, else no hacer nada
         //window.close();
     }
