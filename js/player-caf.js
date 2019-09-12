@@ -76,7 +76,6 @@ class Player {
                 document.getElementById('WatermarkHss').style.opacity = extraOpacity;
             }*/
             document.getElementById('WatermarkHss').innerHTML = watermarkText;
-            document.getElementById('WatermarkHss').innerHTML = "TESTING WATERMARK";
             
             setInterval(this.callSessionValid(base_url, screeners_auth_token, screeners_auth_key), 60000 * 5); // call sessionValid() every 5 minutes
             
