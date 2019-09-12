@@ -75,7 +75,7 @@ class Player {
                 }
                 document.getElementById('WatermarkHss').style.opacity = extraOpacity;
             }
-            console.log("opacity: "+extraOpacity);
+            
             document.getElementById('WatermarkHss').innerHTML = watermarkText;
             
             setInterval(this.callSessionValid(base_url, screeners_auth_token, screeners_auth_key), 60000 * 5); // call sessionValid() every 5 minutes
@@ -188,6 +188,7 @@ class Player {
         });
 
         this.playerManager.addEventListener(cast.framework.events.EventType.LOADED_METADATA, () => {
+            document.getElementById('WatermarkHss').style.visibility = "visible";
             this.OCS_STAT.lastevent = {
                 value: 'loaded',
                 date: this.getTimeSec(),
@@ -219,6 +220,7 @@ class Player {
 
         this.playerManager.addEventListener(cast.framework.events.EventType.MEDIA_FINISHED, (obj) => {
             this.log_('FINISHED');
+            document.getElementById('WatermarkHss').style.visibility = "hidden";
             this.bookmark.save(
                 this.media.customData.userid,
                 this.media.customData.ocscontentid,
