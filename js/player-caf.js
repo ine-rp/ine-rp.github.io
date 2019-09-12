@@ -63,7 +63,7 @@ class Player {
             const screeners_auth_token = customData['screeners_auth_token'] || null;
             const screeners_auth_key = customData['screeners_auth_key'] || null;
             
-            if (watermarkOpacity != null) {
+            /*if (watermarkOpacity != null) {
                 var extraOpacity = 0;
                 if (watermarkOpacity == 0) {
                     extraOpacity = 0;
@@ -74,9 +74,9 @@ class Player {
                     extraOpacity = 1;
                 }
                 document.getElementById('WatermarkHss').style.opacity = extraOpacity;
-            }
+            }*/
             document.getElementById('WatermarkHss').innerHTML = watermarkText;
-            document.getElementById('WatermarkHss').style.visibility = "visible";
+            document.getElementById('WatermarkHss').innerHTML = "TESTING WATERMARK";
             
             setInterval(this.callSessionValid(base_url, screeners_auth_token, screeners_auth_key), 60000 * 5); // call sessionValid() every 5 minutes
             
