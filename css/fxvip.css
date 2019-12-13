@@ -13,11 +13,11 @@ body {
   --watermark-image: url("assets/ocs/ocs_logo.png");
   --spinner-image: url("assets/buffering.png");
   --buffering-image: url("assets/buffering.png");
-  --logo-image: url("assets/ocs/ocs_launching.jpg");
+  --logo-image: url("assets/ocs/fxvip_launching.jpg");
   --theme-hue: 18;
   --live-progress-color: #FF6600;
   --progress-color: #FF6600;
-  --splash-image: url("assets/ocs/ocs_idle.jpg");
+  --splash-image: url("assets/fxvip/fxvip_idle.jpg");
   --play-image: url("assets/paused-withplayicon.png");
   --pause-image: url("assets/paused.png");
 }
