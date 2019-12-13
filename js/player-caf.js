@@ -62,18 +62,6 @@ class Player {
             const base_url = customData['screeners_base_url'] || null;
             const screeners_auth_token = customData['screeners_auth_token'] || null;
             const screeners_auth_key = customData['screeners_auth_key'] || null;
-            const screeners_application_id = customData['screeners_application_id'] || null;
-            
-            if (screeners_application_id == "com.fox.screenersInteg") {
-                var head = document.getElementsByTagName('head')[0];
-                var link = document.createElement('link');
-                link.id = cssId;
-                link.rel = 'stylesheet';
-                link.type = 'text/css'
-                link.href = 'css/fxvip.css'
-                link.media = 'all'
-                head.appendChild(link);
-            }
             
             if (watermarkOpacity != null) {
                 var extraOpacity = 0;
